@@ -1,0 +1,49 @@
+# Không đưa các file sau vào build context
+
+# Bí mật: không bao giờ đóng gói
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Git và IDE
+.git
+.gitignore
+.vscode/
+.idea/
+*.swp
+
+# Python tạm
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+
+# Dữ liệu và kho cục bộ (không đưa dữ liệu thật vào image)
+data/
+chroma/
+chroma_data/
+neo4j/
+logs/
+*.log
+
+# Tài liệu không cần khi chạy (giữ README và AGENTS.md trong Dockerfile)
+docs/
+
+# Docker và tự động hóa
+Dockerfile
+docker-compose*.yml
+.dockerignore
+.github/
+
+# Tệp hệ điều hành
+.DS_Store
+Thumbs.db

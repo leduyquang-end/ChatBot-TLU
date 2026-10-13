@@ -1,0 +1,128 @@
+# ============================================================
+# .gitignore cho ChatBot TLU
+# ============================================================
+
+# ------------------------------------------------------------
+# Bí mật: không bao giờ commit
+# ------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+credentials*.json
+token*.txt
+
+# ------------------------------------------------------------
+# Python
+# ------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Môi trường ảo
+.venv/
+venv/
+env/
+ENV/
+
+# Công cụ kiểm thử và kiểm tra mã
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# ------------------------------------------------------------
+# Dữ liệu và kho cục bộ
+# ------------------------------------------------------------
+# Tài liệu nguồn của trường: không commit, vì có thể có bản quyền hạn chế
+# (chờ xác nhận, xem AGENTS.md mục 16.3)
+data/
+data/source/
+data/processed/
+
+# Kho dữ liệu cục bộ (ChromaDB, Neo4j khi chạy trên máy)
+chroma/
+chroma_data/
+neo4j/
+neo4j_data/
+*.sqlite3
+*.db
+
+# Lịch sử hội thoại cục bộ (nếu lưu dạng file)
+history/
+conversations/
+
+# ------------------------------------------------------------
+# Log
+# ------------------------------------------------------------
+logs/
+*.log
+log/
+
+# ------------------------------------------------------------
+# Cache mô hình và tải về
+# ------------------------------------------------------------
+.cache/
+hf_cache/
+models/
+*.bin
+*.safetensors
+*.onnx
+
+# ------------------------------------------------------------
+# IDE và trình soạn thảo
+# ------------------------------------------------------------
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ------------------------------------------------------------
+# Hệ điều hành
+# ------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------
+# Docker
+# ------------------------------------------------------------
+docker-compose.override.yml
+*.tar
+
+# ------------------------------------------------------------
+# Trợ lý AI: giữ AGENTS.md, chặn file cấu hình riêng của công cụ
+# ------------------------------------------------------------
+# Lưu ý: không chặn AGENTS.md
+.claude/settings.local.json
+.cursor/
+.continue/
+
+# ------------------------------------------------------------
+# File tạm và sinh tự động
+# ------------------------------------------------------------
+*.tmp
+*.bak
+*.orig
+~$*

@@ -1,0 +1,138 @@
+# docker-compose.yml cho ChatBot TLU
+#
+# Chạy:
+#   cp .env.example .env          # điền khóa API và mật khẩu
+#   docker compose up -d --build  # chạy app, ChromaDB, Neo4j
+#   docker compose --profile ingest run --rm ingest   # nạp tri thức (chạy theo đợt)
+#   docker compose down           # dừng (dữ liệu vẫn còn trong volume)
+#   docker compose down -v        # dừng và XÓA toàn bộ dữ liệu (cẩn thận)
+#
+# Yêu cầu: Docker Engine hoặc Docker Desktop, có Docker Compose v2.
+
+name: chatbot-tlu
+
+services:
+
+  # ---------------------------------------------------------------
+  # Ứng dụng chatbot (Flask + gunicorn)
+  # ---------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: chatbot-tlu:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    # Ghi đè địa chỉ để container gọi nhau qua tên dịch vụ, không dùng localhost
+    environment:
+      CHROMA_URL: http://chroma:8000
+      NEO4J_URI: bolt://neo4j:7687
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      # Cache mô hình embedding, tránh tải lại mỗi lần khởi động
+      - hf_cache:/home/app/.cache/huggingface
+      - app_logs:/app/logs
+    depends_on:
+      chroma:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: ${APP_MEMORY_LIMIT:-3g}
+    networks:
+      - chatbot
+
+  # ---------------------------------------------------------------
+  # ChromaDB: kho tìm theo nội dung
+  # ---------------------------------------------------------------
+  chroma:
+    # [Điền: ghim phiên bản cụ thể, ví dụ chromadb/chroma:0.5.x, thay vì latest]
+    image: ${CHROMA_IMAGE:-chromadb/chroma:latest}
+    restart: unless-stopped
+    environment:
+      IS_PERSISTENT: "TRUE"
+      PERSIST_DIRECTORY: /data
+      ANONYMIZED_TELEMETRY: "FALSE"
+    volumes:
+      - chroma_data:/data
+    # Không mở cổng ra ngoài. Chỉ app được gọi.
+    expose:
+      - "8000"
+    healthcheck:
+      # [Điền: kiểm tra lại đường dẫn heartbeat theo phiên bản ChromaDB đã chọn]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - chatbot
+
+  # ---------------------------------------------------------------
+  # Neo4j: kho thực thể và quan hệ
+  # ---------------------------------------------------------------
+  neo4j:
+    # [Điền: ghim phiên bản cụ thể, ví dụ neo4j:5.26]
+    image: ${NEO4J_IMAGE:-neo4j:5}
+    restart: unless-stopped
+    environment:
+      NEO4J_AUTH: "${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:?Thiếu NEO4J_PASSWORD trong .env}"
+      NEO4J_PLUGINS: '[]'
+      NEO4J_server_memory_heap_max__size: ${NEO4J_HEAP_MAX:-1G}
+      NEO4J_server_memory_pagecache_size: ${NEO4J_PAGECACHE:-512M}
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    # Chỉ cho máy chủ đọc từ localhost để xem trình duyệt Neo4j khi cần
+    ports:
+      - "127.0.0.1:7474:7474"
+    expose:
+      - "7687"
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u $${NEO4J_USER:-neo4j} -p $${NEO4J_PASSWORD} 'RETURN 1' || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - chatbot
+
+  # ---------------------------------------------------------------
+  # Nạp tri thức: chỉ chạy khi gọi có profile "ingest"
+  # ---------------------------------------------------------------
+  ingest:
+    image: chatbot-tlu:latest
+    profiles: ["ingest"]
+    env_file:
+      - .env
+    environment:
+      CHROMA_URL: http://chroma:8000
+      NEO4J_URI: bolt://neo4j:7687
+    # [Điền: lệnh chạy script nạp trong scripts/]
+    command: ["python", "scripts/ingest.py"]
+    volumes:
+      # Thư mục chứa tài liệu nguồn, chỉ đọc
+      - ./data/source:/app/data/source:ro
+      - hf_cache:/home/app/.cache/huggingface
+    depends_on:
+      chroma:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    networks:
+      - chatbot
+
+networks:
+  chatbot:
+    driver: bridge
+
+volumes:
+  hf_cache:
+  app_logs:
+  chroma_data:
+  neo4j_data:
+  neo4j_logs:
