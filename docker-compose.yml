@@ -1,12 +1,15 @@
 # docker-compose.yml cho ChatBot TLU
 #
+# Cấu trúc: backend/ (Flask) + frontend/ (nginx) + ChromaDB + Neo4j
+#
 # Chạy:
 #   cp .env.example .env          # điền khóa API và mật khẩu
-#   docker compose up -d --build  # chạy app, ChromaDB, Neo4j
+#   docker compose up -d --build  # chạy backend, frontend, ChromaDB, Neo4j
 #   docker compose --profile ingest run --rm ingest   # nạp tri thức (chạy theo đợt)
 #   docker compose down           # dừng (dữ liệu vẫn còn trong volume)
 #   docker compose down -v        # dừng và XÓA toàn bộ dữ liệu (cẩn thận)
 #
+# Truy cập: http://localhost:8080 (frontend, gọi API qua /api/*)
 # Yêu cầu: Docker Engine hoặc Docker Desktop, có Docker Compose v2.
 
 name: chatbot-tlu
@@ -14,11 +17,11 @@ name: chatbot-tlu
 services:
 
   # ---------------------------------------------------------------
-  # Ứng dụng chatbot (Flask + gunicorn)
+  # Backend: ứng dụng chatbot (Flask + gunicorn)
   # ---------------------------------------------------------------
-  app:
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     image: chatbot-tlu:latest
     restart: unless-stopped
@@ -28,8 +31,10 @@ services:
     environment:
       CHROMA_URL: http://chroma:8000
       NEO4J_URI: bolt://neo4j:7687
+    # Chỉ expose nội bộ network — frontend proxy qua /api.
+    # Vẫn map host để debug trực tiếp (8000 có thể bị chiếm trên host).
     ports:
-      - "${APP_PORT:-8000}:8000"
+      - "${APP_PORT:-8010}:8000"
     volumes:
       # Cache mô hình embedding, tránh tải lại mỗi lần khởi động
       - hf_cache:/home/app/.cache/huggingface
@@ -47,6 +52,22 @@ services:
       - chatbot
 
   # ---------------------------------------------------------------
+  # Frontend: nginx phục vụ tệp tĩnh, chuyển /api/* sang backend
+  # ---------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: chatbot-tlu-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+    networks:
+      - chatbot
+
+  # ---------------------------------------------------------------
   # ChromaDB: kho tìm theo nội dung
   # ---------------------------------------------------------------
   chroma:
@@ -60,15 +81,18 @@ services:
     volumes:
       - chroma_data:/data
     # Không mở cổng ra ngoài. Chỉ app được gọi.
+    # Cổng 8001 trên host để phát triển local (8000 có thể trùng app/laya).
+    ports:
+      - "${CHROMA_PORT:-8001}:8000"
     expose:
       - "8000"
     healthcheck:
-      # [Điền: kiểm tra lại đường dẫn heartbeat theo phiên bản ChromaDB đã chọn]
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat', timeout=4)"]
+      # Image Chroma không có python/curl — chỉ kiểm tra cổng TCP đang mở
+      test: ["CMD-SHELL", "timeout 4 bash -c '</dev/tcp/127.0.0.1/8000' || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 20s
+      start_period: 30s
     networks:
       - chatbot
 
@@ -88,16 +112,19 @@ services:
       - neo4j_data:/data
       - neo4j_logs:/logs
     # Chỉ cho máy chủ đọc từ localhost để xem trình duyệt Neo4j khi cần
+    # + bolt 7687 để app trên host kết nối khi phát triển local
     ports:
       - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
     expose:
       - "7687"
     healthcheck:
-      test: ["CMD-SHELL", "cypher-shell -u $${NEO4J_USER:-neo4j} -p $${NEO4J_PASSWORD} 'RETURN 1' || exit 1"]
+      # ${...} được docker compose thay từ .env (không đặt NEO4J_PASSWORD vào environment — Neo4j 5 từ chối)
+      test: ["CMD-SHELL", "cypher-shell -u ${NEO4J_USER:-neo4j} -p ${NEO4J_PASSWORD} 'RETURN 1' || exit 1"]
       interval: 15s
       timeout: 10s
       retries: 10
-      start_period: 30s
+      start_period: 40s
     networks:
       - chatbot
 
@@ -112,8 +139,7 @@ services:
     environment:
       CHROMA_URL: http://chroma:8000
       NEO4J_URI: bolt://neo4j:7687
-    # [Điền: lệnh chạy script nạp trong scripts/]
-    command: ["python", "scripts/ingest.py"]
+    command: ["python", "scripts/ingest_tlu.py", "data/source"]
     volumes:
       # Thư mục chứa tài liệu nguồn, chỉ đọc
       - ./data/source:/app/data/source:ro

@@ -210,37 +210,32 @@ Chạy mỗi khi sinh viên gửi câu hỏi.
 
 ```
 ChatBot/
-├── AGENTS.md              Quy ước cho người và AI làm việc trên mã nguồn
-├── README.md              File này
-├── docs/                  Tài liệu dự án
-│   ├── 1-tong-quan/       Tổng quan dự án
-│   ├── 2-ky-thuat/        Kỹ thuật
-│   │   ├── ke-hoach-chatbot-tlu.md
-│   │   ├── kien-truc-chatbot-tlu.md
-│   │   └── flows/         Đặc tả quy trình (QT-nn)
-│   ├── 3-san-pham/        Mô tả sản phẩm
-│   ├── 4-van-hanh/        Vận hành
-│   ├── 5-mau/             Mẫu tài liệu (ví dụ phiếu yêu cầu)
-│   ├── 6-design/          Thiết kế
-│   └── 7-ghi-chu/         Ghi chú
-├── scripts/               Lệnh chạy thủ công, gồm lệnh nạp tri thức
-├── src/
-│   ├── modules/           Các tính năng của hệ thống
-│   │   ├── auth/          Xác thực
-│   │   ├── chat/          Hỏi đáp chatbot
-│   │   └── user/          Người dùng (có 4 lớp làm mẫu)
-│   ├── platform/          Hạ tầng kỹ thuật
-│   │   ├── logging/       Ghi log
-│   │   └── security/      Bảo mật
-│   └── shared/            Code dùng chung
-│       ├── common/        Kiểu lỗi, tiện ích
-│       ├── config/        Đọc cấu hình
-│       ├── database/      Kết nối cơ sở dữ liệu
-│       └── events/        Sự kiện
-└── tests/
-    ├── unit/              Kiểm thử đơn vị
-    ├── integration/       Kiểm thử tích hợp (cần dịch vụ thật)
-    └── e2e/               Kiểm thử đầu cuối
+├── AGENT.md                Quy ước cho người và AI làm việc trên mã nguồn
+├── README.md               File này
+├── .env.example            Mẫu biến môi trường
+├── docker-compose.yml      backend + frontend + ChromaDB + Neo4j
+├── docs/                   Tài liệu dự án
+│   ├── 1-tong-quan/
+│   ├── 2-ky-thuat/
+│   │   └── flows/
+│   ├── 3-san-pham/
+│   ├── 4-van-hanh/
+│   ├── 5-mau/
+│   ├── 6-design/
+│   └── 7-ghi-chu/
+├── backend/                Flask API + pipeline nạp tri thức
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── scripts/            Lệnh chạy thủ công (ingest_tlu.py)
+│   ├── src/
+│   │   ├── modules/        auth, chat, user
+│   │   ├── platform/       logging, security
+│   │   └── shared/         common, config, database, events
+│   └── tests/              unit, integration, e2e
+└── frontend/               Giao diện chat
+    ├── Dockerfile          nginx
+    ├── nginx.conf          tệp tĩnh + proxy /api/* → backend
+    └── public/index.html   trang chat
 ```
 
 ### 5.1. Quy ước trong `src/modules/`

@@ -52,7 +52,6 @@ COPY --from=builder /install /usr/local
 # Mã nguồn
 COPY src/ ./src/
 COPY scripts/ ./scripts/
-COPY README.md AGENTS.md ./
 
 # Thư mục ghi được cho cache mô hình và log
 RUN mkdir -p /home/app/.cache/huggingface /app/logs \
