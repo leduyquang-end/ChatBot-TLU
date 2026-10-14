@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chatbot TLU</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, sans-serif;
+      background: #f4f6f8; color: #1a1a1a;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 16px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    h1 { font-size: 1.2rem; margin: 0; }
+    #login, #chat { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    label { display: block; font-size: .9rem; margin: 8px 0 4px; }
+    input, button { font: inherit; }
+    input[type=text], input[type=password] {
+      width: 100%; padding: 10px; border: 1px solid #ccd; border-radius: 8px;
+    }
+    button {
+      margin-top: 12px; padding: 10px 16px; border: 0; border-radius: 8px;
+      background: #0b5ed7; color: #fff; cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    #messages { min-height: 280px; max-height: 480px; overflow-y: auto; border: 1px solid #dde; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+    .msg { margin-bottom: 10px; padding: 8px 10px; border-radius: 8px; max-width: 90%; white-space: pre-wrap; }
+    .user { background: #d8e8ff; margin-left: auto; }
+    .bot { background: #eef1f4; }
+    .error { background: #fdecea; color: #b3261e; }
+    #composer { display: flex; gap: 8px; }
+    #composer input { flex: 1; }
+    .hidden { display: none; }
+    .meta { font-size: .75rem; color: #667; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Chatbot TLU</h1>
+      <button id="logoutBtn" class="hidden" type="button">Đăng xuất</button>
+    </header>
+
+    <section id="login">
+      <h2>Đăng nhập</h2>
+      <label for="username">Tài khoản</label>
+      <input id="username" type="text" autocomplete="username" />
+      <label for="password">Mật khẩu</label>
+      <input id="password" type="password" autocomplete="current-password" />
+      <button id="loginBtn" type="button">Đăng nhập</button>
+      <p class="meta">Demo: sinhvien01 / demo-password</p>
+      <p id="loginError" class="error hidden"></p>
+    </section>
+
+    <section id="chat" class="hidden">
+      <div id="messages"></div>
+      <form id="composer">
+        <input id="question" type="text" placeholder="Nhập câu hỏi về quy định, học phí, ngành học..." maxlength="2000" />
+        <button id="sendBtn" type="submit">Gửi</button>
+      </form>
+      <p id="chatError" class="error hidden"></p>
+    </section>
+  </div>
+
+  <script>
+    const state = {
+      token: localStorage.getItem("token") || "",
+      conversationId: localStorage.getItem("cid") || crypto.randomUUID(),
+    };
+    localStorage.setItem("cid", state.conversationId);
+
+    const $ = (id) => document.getElementById(id);
+    const API = "/api";
+
+    function showChat(show) {
+      $("login").classList.toggle("hidden", show);
+      $("chat").classList.toggle("hidden", !show);
+      $("logoutBtn").classList.toggle("hidden", !show);
+    }
+
+    function addMessage(text, role, meta) {
+      const div = document.createElement("div");
+      div.className = "msg " + role;
+      div.textContent = text;
+      if (meta) {
+        const m = document.createElement("div");
+        m.className = "meta";
+        m.textContent = meta;
+        div.appendChild(m);
+      }
+      $("messages").appendChild(div);
+      $("messages").scrollTop = $("messages").scrollHeight;
+    }
+
+    async function login() {
+      $("loginError").classList.add("hidden");
+      try {
+        const res = await fetch(API + "/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: $("username").value.trim(), password: $("password").value }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error?.message || "Đăng nhập thất bại");
+        state.token = data.token;
+        localStorage.setItem("token", state.token);
+        showChat(true);
+      } catch (e) {
+        $("loginError").textContent = e.message;
+        $("loginError").classList.remove("hidden");
+      }
+    }
+
+    async function ask(question) {
+      $("chatError").classList.add("hidden");
+      addMessage(question, "user");
+      $("sendBtn").disabled = true;
+      try {
+        const res = await fetch(API + "/chat/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + state.token },
+          body: JSON.stringify({ question, conversation_id: state.conversationId }),
+        });
+        const data = await res.json();
+        if (res.status === 401) {
+          state.token = "";
+          localStorage.removeItem("token");
+          showChat(false);
+          throw new Error("Phiên đăng nhập đã hết hạn");
+        }
+        if (!res.ok) throw new Error(data?.error?.message || "Không gửi được câu hỏi");
+        addMessage(data.answer, "bot", "Cách tìm: " + data.mode);
+      } catch (e) {
+        $("chatError").textContent = e.message;
+        $("chatError").classList.remove("hidden");
+      } finally {
+        $("sendBtn").disabled = false;
+        $("question").focus();
+      }
+    }
+
+    $("loginBtn").addEventListener("click", login);
+    $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
+    $("composer").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = $("question").value.trim();
+      if (!q) return;
+      $("question").value = "";
+      ask(q);
+    });
+    $("logoutBtn").addEventListener("click", () => {
+      state.token = "";
+      localStorage.removeItem("token");
+      showChat(false);
+    });
+
+    if (state.token) showChat(true);
+  </script>
+</body>
+</html>
