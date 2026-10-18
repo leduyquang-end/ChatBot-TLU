@@ -27,5 +27,6 @@ Ba việc chính:
 | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Có | Thông tin kết nối Neo4j (kho đồ thị) |
 | `APP_PORT` | Không | Cổng chạy server (mặc định 8000) |
 | `LOG_LEVEL` | Không | Mức độ chi tiết log (mặc định INFO) |
+| `REFRESH_TOKEN_TTL_HOURS` | Không | Thời hạn refresh token theo giờ (mặc định 720 = 30 ngày) |
 
 **Khi code theo:** Không đọc `os.environ` trực tiếp ở nơi khác — luôn dùng `get_settings()` để đảm bảo mọi giá trị đều qua một cửa sổ kiểm tra.

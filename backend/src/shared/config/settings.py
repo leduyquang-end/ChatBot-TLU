@@ -46,6 +46,7 @@ class Settings:
     neo4j_user: str
     neo4j_password: str
     app_port: int = 8000
+    refresh_token_ttl_hours: int = 720
     log_level: str = "INFO"
     chunk_size: int = 800
     chunk_overlap: int = 120
@@ -78,6 +79,7 @@ class Settings:
             neo4j_user=_env("NEO4J_USER", required=True),
             neo4j_password=_env("NEO4J_PASSWORD", required=True),
             app_port=_env_int("APP_PORT", 8000),
+            refresh_token_ttl_hours=_env_int("REFRESH_TOKEN_TTL_HOURS", 720),
             log_level=_env("LOG_LEVEL", "INFO").upper(),
             chunk_size=_env_int("CHUNK_SIZE", 800),
             chunk_overlap=_env_int("CHUNK_OVERLAP", 120),
