@@ -34,8 +34,12 @@ class TênNghiệpVụUseCase:                    # 1. Tên lớp: ...UseCase
 
 File hiện có:
 
-- **`login.py`** — `LoginUseCase` + `LoginResult` (kiểu trả về)
+- **`login.py`** — `LoginUseCase` + `LoginResult` (kiểu trả về): đăng nhập → cấp access token + refresh token
+- **`refresh.py`** — `RefreshTokenUseCase` + `RefreshResult`: dùng refresh token đổi token mới (xoay phiên)
+- **`logout.py`** — `LogoutUseCase` + `LogoutResult`: thu hồi refresh token (idempotent)
 - **`ports/credential_checker.py`** — `CredentialChecker` (hợp đồng)
+- **`ports/token_issuer.py`** — `TokenIssuerPort` (hợp đồng)
+- **`ports/refresh_token_store.py`** — `RefreshTokenStore` (hợp đồng)
 
 ## Luồng trong `LoginUseCase.execute()`
 
@@ -45,18 +49,48 @@ execute(username, password)
    ├─ 1. Kiểm tra phòng hờ: rỗng? → UnauthorizedError
    ├─ 2. checker.check(username, password)  → False? UnauthorizedError
    ├─ 3. checker.find_user(username)        → None? UnauthorizedError
-   └─ 4. token_issuer.issue(user.id)        → trả LoginResult
+   ├─ 4. token_issuer.issue(user.id)        → access token
+   └─ 5. store.create(user.id)              → refresh token (phiên)
 ```
 
-**2 phụ thuộc truyền qua constructor:**
+## Luồng trong `RefreshTokenUseCase.execute(refresh_token)`
 
-| Port | Việc làm |
-|------|----------|
-| `CredentialChecker` | Kiểm tra mật khẩu + tìm user |
-| `TokenIssuerPort` | Cấp token (application không biết cách ký) |
+```
+execute(raw)
+   │
+   ├─ 1. store.find(raw)              → None? UnauthorizedError (401)
+   ├─ 2. session.is_expired(now)      → True? revoke + UnauthorizedError
+   ├─ 3. users.find_by_id(...)        → None (user bị xóa)? revoke + UnauthorizedError
+   └─ 4. Xoay phiên: revoke cũ → store.create → token_issuer.issue → RefreshResult
+```
 
-**Tại sao mọi lỗi đều cùng một thông điệp "Sai tài khoản hoặc mật khẩu"?**
+**Tại sao thu hồi khi fail ở bước 2-3?** Phiên không còn dùng được thì giữ trong kho chỉ tốn bộ nhớ (và là mục tiêu dò tìm) — dọn ngay.
+
+## Luồng trong `LogoutUseCase.execute(refresh_token)`
+
+```
+execute(raw)
+   │
+   ├─ raw rỗng hoặc không tìm thấy → LogoutResult(revoked=False)   ← không lỗi!
+   └─ tìm thấy → store.revoke(raw) → LogoutResult(revoked=True)
+```
+
+**Idempotent:** đăng xuất gọi lại bao nhiêu lần cũng thành công — hành động an toàn không được báo lỗi.
+
+**3 phụ thuộc truyền qua constructor:**
+
+| Port | Việc làm | Dùng bởi |
+|------|----------|----------|
+| `CredentialChecker` | Kiểm tra mật khẩu + tìm user | Login |
+| `TokenIssuerPort` | Cấp access token (application không biết cách ký) | Login, Refresh |
+| `RefreshTokenStore` | Tạo/tìm/thu hồi phiên refresh | Login, Refresh, Logout |
+| `UserRepository` (module user) | Tìm user theo id — kiểm tra user còn tồn tại, lấy role | Refresh |
+
+**Tại sao mọi lỗi đăng nhập đều cùng một thông điệp "Sai tài khoản hoặc mật khẩu"?**
 Để không tiết lộ: người dùng sai ở bước nào (sai username? sai password?). Hacker không dò được từng phần.
+
+**Tại sao lỗi refresh đều là "Phiên đăng nhập đã hết hạn"?**
+Không tiết lộ: chuỗi gửi lên là chưa từng tồn tại, đã bị thu hồi, đã hết hạn hay user bị xóa — tất cả cùng một câu trả lời.
 
 ## Phân chia kiểm tra: route vs use case
 
@@ -95,7 +129,7 @@ return {"error": "sai mật khẩu"}, 401
 
 **Đặt tên:**
 
-- Lớp: `...UseCase` (ví dụ `LoginUseCase`, sau này có thể có `RefreshTokenUseCase`)
+- Lớp: `...UseCase` (ví dụ `LoginUseCase`, `RefreshTokenUseCase`, `LogoutUseCase`)
 - Method: `execute(...)` — chỉ 1 method chính
 - Kiểu trả về: `...Result`
 

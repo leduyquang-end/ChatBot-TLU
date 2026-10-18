@@ -26,14 +26,22 @@ Chứa một Blueprint (Flask Blueprint = "quầy order" riêng cho nhóm chức
 
 | Endpoint | Method | Việc làm |
 |----------|--------|----------|
-| `/auth/login` | POST | Nhận `{username, password}` → trả `{token, user_id, role}` |
+| `/auth/login` | POST | Nhận `{username, password}` → trả `{token, refresh_token, user_id, role}` |
+| `/auth/refresh` | POST | Nhận `{refresh_token}` → trả token + phiên mới (xoay phiên) |
+| `/auth/logout` | POST | Nhận `{refresh_token}` → thu hồi phiên, trả `{revoked}` |
+
+`_read_refresh_token()` là hàm chung cho 2 endpoint sau: kiểm tra `refresh_token` có phải string và không rỗng không — thiếu/sai → `ValidationError` (400).
 
 ## Cách hoạt động
 
+Mọi endpoint đều theo đúng 4 bước:
+
 1. Nhận JSON từ request
-2. Kiểm tra: có username và password chưa? Thiếu → ném `ValidationError` (trả về 400)
-3. Gọi `LoginUseCase` (bếp trưởng) để xử lý đăng nhập
+2. Kiểm tra thô: field bắt buộc có chưa? Thiếu/sai kiểu → ném `ValidationError` (400)
+3. Gọi use case (bếp trưởng) để xử lý — logic nghiệp vụ không nằm ở đây
 4. Trả kết quả về cho người dùng
+
+Nếu là refresh/logout thất bại nghiệp vụ (401), use case tự ném `UnauthorizedError` — route không try/catch, `main.py` trả JSON + mã HTTP.
 
 ## Quy tắc khi viết endpoint mới
 
