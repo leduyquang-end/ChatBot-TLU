@@ -68,7 +68,7 @@ class Settings:
     extra: dict = field(default_factory=dict)
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls) -> Settings:
         return cls(
             groq_api_key=_env("GROQ_API_KEY", required=True),
             qwen_api_key=_env("QWEN_API_KEY", required=True),

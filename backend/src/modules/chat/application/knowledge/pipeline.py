@@ -24,14 +24,14 @@ ENTITY_TYPES = [
     "ThuTuc",
 ]
 
-EXTRACT_SYSTEM = """Bạn là trợ lý trích xuất tri thức từ tài liệu của Trường Đại học Thủy Lợi.
-Trích thực thể và quan hệ từ đoạn văn bản.
-Các loại thực thể: {types}.
-Quy tắc:
-- Chỉ trích thông tin có trong văn bản, không suy đoán.
-- Mỗi thực thể có name, description, entity_type.
-- Mỗi quan hệ có source, target, description, confidence (0 đến 1).
-Trả về JSON: {{"entities": [...], "relations": [...]}}"""
+EXTRACT_SYSTEM = """BÃ¡ÂºÂ¡n lÃƒÂ  trÃ¡Â»Â£ lÃƒÂ½ trÃƒÂ­ch xuÃ¡ÂºÂ¥t tri thÃ¡Â»Â©c tÃ¡Â»Â« tÃƒÂ i liÃ¡Â»â€¡u cÃ¡Â»Â§a TrÃ†Â°Ã¡Â»Âng Ã„ÂÃ¡ÂºÂ¡i hÃ¡Â»Âc ThÃ¡Â»Â§y LÃ¡Â»Â£i.
+TrÃƒÂ­ch thÃ¡Â»Â±c thÃ¡Â»Æ’ vÃƒÂ  quan hÃ¡Â»â€¡ tÃ¡Â»Â« Ã„â€˜oÃ¡ÂºÂ¡n vÃ„Æ’n bÃ¡ÂºÂ£n.
+CÃƒÂ¡c loÃ¡ÂºÂ¡i thÃ¡Â»Â±c thÃ¡Â»Æ’: {types}.
+Quy tÃ¡ÂºÂ¯c:
+- ChÃ¡Â»â€° trÃƒÂ­ch thÃƒÂ´ng tin cÃƒÂ³ trong vÃ„Æ’n bÃ¡ÂºÂ£n, khÃƒÂ´ng suy Ã„â€˜oÃƒÂ¡n.
+- MÃ¡Â»â€”i thÃ¡Â»Â±c thÃ¡Â»Æ’ cÃƒÂ³ name, description, entity_type.
+- MÃ¡Â»â€”i quan hÃ¡Â»â€¡ cÃƒÂ³ source, target, description, confidence (0 Ã„â€˜Ã¡ÂºÂ¿n 1).
+TrÃ¡ÂºÂ£ vÃ¡Â»Â JSON: {{"entities": [...], "relations": [...]}}"""
 
 
 @dataclass
@@ -55,7 +55,7 @@ class IngestReport:
 
 
 class KnowledgeIngestPipeline:
-    """QT-02: nạp tri thức vào ChromaDB và Neo4j."""
+    """QT-02: nÃ¡ÂºÂ¡p tri thÃ¡Â»Â©c vÃƒÂ o ChromaDB vÃƒÂ  Neo4j."""
 
     def __init__(
         self,
@@ -87,7 +87,7 @@ class KnowledgeIngestPipeline:
                 logger.info(
                     "event=ingest.document.done file=%s chunks=%d", path.name, len(chunks)
                 )
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001
                 report.documents_failed.append(path.name)
                 logger.error(
                     "event=ingest.document.error file=%s reason=%s",
@@ -95,18 +95,18 @@ class KnowledgeIngestPipeline:
                     type(exc).__name__,
                 )
 
-        # Nhánh vector
+        # NhÃƒÂ¡nh vector
         if all_chunks:
             self._vector_store.add_chunks(all_chunks)
             report.chunk_count = len(all_chunks)
 
-        # Nhánh đồ thị: trích thực thể bằng Qwen
+        # NhÃƒÂ¡nh Ã„â€˜Ã¡Â»â€œ thÃ¡Â»â€¹: trÃƒÂ­ch thÃ¡Â»Â±c thÃ¡Â»Æ’ bÃ¡ÂºÂ±ng Qwen
         for path in sorted(source_dir.rglob("*")):
             if not path.is_file() or path.name not in report.documents_ok:
                 continue
             try:
                 chunks = load_document(path)
-            except Exception:
+            except Exception:  # noqa: BLE001, S112
                 continue
             for chunk in chunks:
                 entities, relations = self._extract_entities(chunk["text"])
@@ -126,7 +126,7 @@ class KnowledgeIngestPipeline:
             ]
             try:
                 embeddings = self._embedder.embed(names_and_desc)
-            except Exception:
+            except Exception:  # noqa: BLE001
                 embeddings = None
 
         merged, merge_count = merge_entities(
@@ -144,7 +144,7 @@ class KnowledgeIngestPipeline:
                 emb = self._embedder.embed(
                     [f"{ent.get('name', '')} {ent.get('description', '')}"]
                 )[0]
-            except Exception:
+            except Exception:  # noqa: BLE001
                 emb = None
             self._graph_writer.upsert_entity(
                 name=ent.get("name", ""),
@@ -166,7 +166,7 @@ class KnowledgeIngestPipeline:
         return report
 
     def _extract_entities(self, text: str) -> tuple[list[dict], list[dict]]:
-        prompt = EXTRACT_SYSTEM.format(types=", ".join(ENTITY_TYPES)) + f"\n\nĐoạn văn bản:\n{text[:4000]}"
+        prompt = EXTRACT_SYSTEM.format(types=", ".join(ENTITY_TYPES)) + f"\n\nÃ„ÂoÃ¡ÂºÂ¡n vÃ„Æ’n bÃ¡ÂºÂ£n:\n{text[:4000]}"
         try:
             response = requests.post(
                 "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
@@ -186,13 +186,13 @@ class KnowledgeIngestPipeline:
             data = json.loads(content)
             entities = data.get("entities", []) or []
             relations = data.get("relations", []) or []
-            # Validate loại thực thể
+            # Validate loÃ¡ÂºÂ¡i thÃ¡Â»Â±c thÃ¡Â»Æ’
             valid_entities = [
                 e
                 for e in entities
                 if e.get("entity_type") in ENTITY_TYPES and e.get("name")
             ]
             return valid_entities, relations
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
             logger.warning("event=ingest.extract.error reason=%s", type(exc).__name__)
             return [], []

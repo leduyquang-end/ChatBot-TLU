@@ -2,7 +2,7 @@
 
 Chatbot hỏi đáp bằng tiếng Việt cho sinh viên Trường Đại học Thủy Lợi. Chatbot trả lời dựa trên tài liệu của trường. Khi tài liệu không có thông tin, chatbot nói rõ là không có và gợi ý liên hệ, không tự trả lời theo kiến thức chung.
 
-> **Trạng thái:** đang triển khai. Xem [kế hoạch triển khai](docs/2-ky-thuat/ke-hoach-chatbot-tlu.md) và [kiến trúc](docs/2-ky-thuat/kien-truc-chatbot-tlu.md).
+> **Trạng thái:** đang triển khai. Xem [kế hoạch triển khai](docs/2-ky-thuat/Plan_chatbot_tlu.md) và [kiến trúc](docs/2-ky-thuat/Kien_truc_chatbot_tlu.md).
 
 ---
 
@@ -399,8 +399,8 @@ Mở trình duyệt tại [Điền: địa chỉ], đăng nhập bằng tài kho
 
 **Tiêu chí nghiệm thu** nằm trong mục 12 của hai file đặc tả:
 
-- [QT-01](docs/2-ky-thuat/flows/QT-01-hoi-dap-sinh-vien.md): AC-01 đến AC-05.
-- [QT-02](docs/2-ky-thuat/flows/QT-02-cap-nhat-tri-thuc-chatbot.md): AC-01 đến AC-05.
+- [QT-01](docs/2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md): AC-01 đến AC-05.
+- [QT-02](docs/2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md): AC-01 đến AC-05.
 
 ---
 
@@ -461,11 +461,11 @@ Có, để dùng cho câu hỏi tiếp theo trong cùng cuộc trò chuyện. Th
 
 | Tài liệu | Nội dung |
 |----------|----------|
-| [Kế hoạch triển khai](docs/2-ky-thuat/ke-hoach-chatbot-tlu.md) | Giai đoạn, phụ thuộc, rủi ro, câu hỏi mở |
-| [Kiến trúc](docs/2-ky-thuat/kien-truc-chatbot-tlu.md) | Sơ đồ thành phần, quyết định kỹ thuật (ADR) |
-| [QT-01: Sinh viên hỏi đáp](docs/2-ky-thuat/flows/QT-01-hoi-dap-sinh-vien.md) | Luồng hỏi đáp, lỗi, tiêu chí nghiệm thu |
-| [QT-02: Nạp và cập nhật tri thức](docs/2-ky-thuat/flows/QT-02-cap-nhat-tri-thuc-chatbot.md) | Luồng nạp, lỗi, tiêu chí nghiệm thu |
-| [AGENTS.md](AGENTS.md) | Quy ước cho người và AI làm việc trên mã nguồn |
+| [Kế hoạch triển khai](docs/2-ky-thuat/Plan_chatbot_tlu.md) | Giai đoạn, phụ thuộc, rủi ro, câu hỏi mở |
+| [Kiến trúc](docs/2-ky-thuat/Kien_truc_chatbot_tlu.md) | Sơ đồ thành phần, quyết định kỹ thuật (ADR) |
+| [QT-01: Sinh viên hỏi đáp](docs/2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md) | Luồng hỏi đáp, lỗi, tiêu chí nghiệm thu |
+| [QT-02: Nạp và cập nhật tri thức](docs/2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md) | Luồng nạp, lỗi, tiêu chí nghiệm thu |
+| [AGENTS.md](AGENT.md) | Quy ước cho người và AI làm việc trên mã nguồn |
 
 ---
 

@@ -1,7 +1,6 @@
 import pytest
 
 from src.main import create_app
-from src.shared.common.errors import ValidationError
 
 
 @pytest.fixture()

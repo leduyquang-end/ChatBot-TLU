@@ -3,8 +3,11 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from src.modules.chat.application.knowledge.cleaning import clean_text, strip_repeated_headers
 from src.modules.chat.application.knowledge.chunking import chunk_text
+from src.modules.chat.application.knowledge.cleaning import (
+    clean_text,
+    strip_repeated_headers,
+)
 from src.modules.chat.application.knowledge.table_processing import (
     drop_total_and_note_rows,
     fill_merged_cells,

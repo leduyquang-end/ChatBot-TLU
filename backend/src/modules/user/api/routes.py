@@ -3,15 +3,18 @@ from __future__ import annotations
 from flask import Blueprint, jsonify
 
 from src.modules.user.application.get_user_by_id import GetUserById
-from src.modules.user.infrastructure.in_memory_user_repository import get_user_repository
+from src.modules.user.infrastructure.in_memory_user_repository import (
+    get_user_repository,
+)
 
 bp = Blueprint("user", __name__, url_prefix="/user")
 
 
 @bp.get("/me")
 def get_me():
-    from src.platform.security.auth import verify_token
     from flask import request
+
+    from src.platform.security.auth import verify_token
 
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):

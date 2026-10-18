@@ -17,8 +17,9 @@ class SentenceTransformerEmbedder:
 
     def _load(self):
         if self._model is None:
-            from sentence_transformers import SentenceTransformer
             import os
+
+            from sentence_transformers import SentenceTransformer
 
             self._model = SentenceTransformer(
                 self._settings.embedding_model,

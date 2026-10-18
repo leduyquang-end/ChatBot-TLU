@@ -76,7 +76,6 @@ def merge_entities(
 def _merge_pair(a: dict, b: dict) -> dict:
     """Giữ mô tả dài hơn, chuyển quan hệ, gộp relations."""
     keep = a if len(a.get("description", "")) >= len(b.get("description", "")) else b
-    other = b if keep is a else a
     merged = dict(keep)
     relations = list(a.get("relations", [])) + list(b.get("relations", []))
     seen: set[tuple] = set()
@@ -86,9 +85,11 @@ def _merge_pair(a: dict, b: dict) -> dict:
         if key in seen:
             # giữ bản có confidence cao hơn
             for idx, existing in enumerate(unique):
-                if (existing.get("source", ""), existing.get("target", "")) == key:
-                    if rel.get("confidence", 0) > existing.get("confidence", 0):
-                        unique[idx] = rel
+                if (
+                    (existing.get("source", ""), existing.get("target", "")) == key
+                    and rel.get("confidence", 0) > existing.get("confidence", 0)
+                ):
+                    unique[idx] = rel
             continue
         seen.add(key)
         unique.append(rel)
