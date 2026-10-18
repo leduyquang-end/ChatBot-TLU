@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from src.modules.auth.application.ports.credential_checker import CredentialChecker
+from src.modules.auth.application.ports.refresh_token_store import RefreshTokenStore
 from src.modules.auth.application.ports.token_issuer import TokenIssuerPort
 from src.shared.common.errors import UnauthorizedError
 
@@ -12,6 +13,7 @@ class LoginResult:
     """Kiểu trả về của login — đóng gói kết quả, bất biến (frozen)."""
 
     token: str
+    refresh_token: str
     user_id: str
     role: str
 
@@ -21,7 +23,7 @@ class LoginUseCase:
 
     - Không biết HTTP (không import Flask, không đọc request).
     - Không biết hạ tầng (không import platform, infrastructure).
-    - Phụ thuộc CredentialChecker + TokenIssuerPort — truyền qua constructor.
+    - Phụ thuộc CredentialChecker + TokenIssuerPort + RefreshTokenStore — truyền qua constructor.
     - Lỗi nghiệp vụ → ném exception từ shared/common/errors.
     """
 
@@ -31,9 +33,11 @@ class LoginUseCase:
         self,
         checker: CredentialChecker,
         token_issuer: TokenIssuerPort,
+        store: RefreshTokenStore,
     ) -> None:
         self._checker = checker
         self._token_issuer = token_issuer
+        self._store = store
 
     def execute(self, username: str, password: str) -> LoginResult:
         # Kiểm tra nghiệp vụ phòng hờ (route đã kiểm tra thô rồi)
@@ -49,4 +53,10 @@ class LoginUseCase:
             raise UnauthorizedError(self._FAIL_MESSAGE)
 
         token = self._token_issuer.issue(user.id)
-        return LoginResult(token=token, user_id=user.id, role=user.role)
+        refresh = self._store.create(user.id)
+        return LoginResult(
+            token=token,
+            refresh_token=refresh.token,
+            user_id=user.id,
+            role=user.role,
+        )
