@@ -92,7 +92,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Kiểm tra cú pháp docker-compose.yml
-        run: docker compose -f docker-compose.yml config --quiet
+        run: |
+          cp .env.example .env
+          docker compose -f docker-compose.yml config --quiet
 
       - name: Build image backend
         run: docker build -t chatbot-tlu-app:ci ./backend

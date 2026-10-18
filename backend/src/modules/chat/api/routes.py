@@ -6,12 +6,12 @@ from flask import Blueprint, jsonify, request
 
 from src.modules.chat.application.chat_pipeline import ChatPipeline
 from src.modules.chat.infrastructure.chroma_retrieval import ChromaVectorRetrieval
+from src.modules.chat.infrastructure.groq_router_client import GroqRouterClient
 from src.modules.chat.infrastructure.hf_embedder import SentenceTransformerEmbedder
 from src.modules.chat.infrastructure.memory_conversation_store import (
     InMemoryConversationStore,
 )
 from src.modules.chat.infrastructure.neo4j_graph_retrieval import Neo4jGraphRetrieval
-from src.modules.chat.infrastructure.groq_router_client import GroqRouterClient
 from src.modules.chat.infrastructure.qwen_answer_client import QwenAnswerClient
 from src.platform.security.auth import sanitize_input, verify_token
 from src.shared.common.errors import UnauthorizedError, ValidationError

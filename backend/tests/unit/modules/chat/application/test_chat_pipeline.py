@@ -9,16 +9,16 @@ from src.shared.config.settings import Settings
 
 
 def make_settings(**overrides) -> Settings:
-    base = dict(
-        groq_api_key="g",
-        qwen_api_key="q",
-        hf_token="h",
-        chroma_url="http://localhost:8000",
-        neo4j_uri="bolt://localhost:7687",
-        neo4j_user="neo4j",
-        neo4j_password="pw",
-        no_info_threshold=0.15,
-    )
+    base = {
+        "groq_api_key": "g",
+        "qwen_api_key": "q",
+        "hf_token": "h",
+        "chroma_url": "http://localhost:8000",
+        "neo4j_uri": "bolt://localhost:7687",
+        "neo4j_user": "neo4j",
+        "neo4j_password": "pw",
+        "no_info_threshold": 0.15,
+    }
     base.update(overrides)
     return Settings(**base)
 

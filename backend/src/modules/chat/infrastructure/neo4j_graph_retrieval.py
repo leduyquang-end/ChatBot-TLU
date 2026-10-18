@@ -8,17 +8,17 @@ from src.shared.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
-# Trích thực thể từ câu hỏi bằng Llama qua Groq
+# TrÃ­ch thá»±c thá»ƒ tá»« cÃ¢u há»i báº±ng Llama qua Groq
 EXTRACT_PROMPT = (
-    "Trích các tên thực thể (môn học, ngành học, học phí, học bổng, "
-    "học kỳ, bộ môn, đối tượng, thủ tục) xuất hiện trong câu hỏi sau. "
-    "Trả về JSON {\"entities\": [\"...\"]} với tối đa 5 tên. "
-    "Nếu không có, trả về {\"entities\": []}.\n\nCâu hỏi: {question}"
+    "TrÃ­ch cÃ¡c tÃªn thá»±c thá»ƒ (mÃ´n há»c, ngÃ nh há»c, há»c phÃ­, há»c bá»•ng, "
+    "há»c ká»³, bá»™ mÃ´n, Ä‘á»‘i tÆ°á»£ng, thá»§ tá»¥c) xuáº¥t hiá»‡n trong cÃ¢u há»i sau. "
+    "Tráº£ vá» JSON {\"entities\": [\"...\"]} vá»›i tá»‘i Ä‘a 5 tÃªn. "
+    "Náº¿u khÃ´ng cÃ³, tráº£ vá» {\"entities\": []}.\n\nCÃ¢u há»i: {question}"
 )
 
 
 class Neo4jGraphRetrieval:
-    """Truy xuất đồ thị: chấm điểm α·semantic + (1−α)·keyword (ADR-06)."""
+    """Truy xuáº¥t Ä‘á»“ thá»‹: cháº¥m Ä‘iá»ƒm Î±Â·semantic + (1âˆ’Î±)Â·keyword (ADR-06)."""
 
     def __init__(self, settings: Settings, embedder, groq_api_key: str) -> None:
         self._settings = settings
@@ -53,7 +53,7 @@ class Neo4jGraphRetrieval:
             raise
         except Exception as exc:
             logger.error("event=chat.retrieval.graph.error reason=%s", type(exc).__name__)
-            raise ExternalServiceError("Kho quan hệ không truy cập được") from exc
+            raise ExternalServiceError("Kho quan há»‡ khÃ´ng truy cáº­p Ä‘Æ°á»£c") from exc
 
     def _extract_entities(self, question: str) -> list[str]:
         import json
@@ -82,7 +82,7 @@ class Neo4jGraphRetrieval:
             content = response.json()["choices"][0]["message"]["content"]
             data = json.loads(content)
             return [str(e) for e in data.get("entities", [])][:5]
-        except Exception:
+        except Exception:  # noqa: BLE001
             return []
 
     def _score_nodes(
@@ -122,7 +122,7 @@ class Neo4jGraphRetrieval:
                         "score": float(record["keyword_score"]),
                     }
                 )
-        # semantic score nếu có embedding stored; tạm dùng keyword làm fallback
+        # semantic score náº¿u cÃ³ embedding stored; táº¡m dÃ¹ng keyword lÃ m fallback
         if results:
             max_kw = max(r["score"] for r in results) or 1.0
             for r in results:
@@ -157,7 +157,7 @@ class Neo4jGraphRetrieval:
 
 
 class Neo4jGraphWriter:
-    """Ghi thực thể và quan hệ bằng MERGE (ADR-07)."""
+    """Ghi thá»±c thá»ƒ vÃ  quan há»‡ báº±ng MERGE (ADR-07)."""
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings

@@ -12,7 +12,7 @@ class RetrievalMode(str, Enum):
     NONE = "None"
 
     @classmethod
-    def from_label(cls, label: str) -> "RetrievalMode":
+    def from_label(cls, label: str) -> RetrievalMode:
         """Parse nhãn từ router. Sai định dạng → Vector (ADR-08, BR-03)."""
         normalized = (label or "").strip()
         for mode in cls:
