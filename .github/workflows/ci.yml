@@ -37,6 +37,14 @@ jobs:
     env:
       PYTHONPATH: ${{ github.workspace }}/backend
       PYTHONDONTWRITEBYTECODE: "1"
+      # Giá trị giả — chỉ để create_app() khởi động được khi test import src.main
+      GROQ_API_KEY: ci-placeholder
+      QWEN_API_KEY: ci-placeholder
+      HF_TOKEN: ci-placeholder
+      CHROMA_URL: http://localhost:8001
+      NEO4J_URI: bolt://localhost:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ci-placeholder
     steps:
       - name: Lấy mã nguồn
         uses: actions/checkout@v4
