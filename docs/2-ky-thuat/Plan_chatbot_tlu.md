@@ -5,7 +5,7 @@
 | Dự án | ChatBot (Trường Đại học Thủy Lợi) |
 | Phiên bản | 1.0 - 2026-10-13 |
 | Trạng thái | Nháp, chờ xác nhận các câu hỏi mở ở mục 10 |
-| Đặc tả liên quan | `docs/2-ky-thuat/flows/QT-01-hoi-dap-sinh-vien.md`, `docs/2-ky-thuat/flows/QT-02-cap-nhat-tri-thuc-chatbot.md` |
+| Đặc tả liên quan | `docs/2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md`, `docs/2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md` |
 
 ## 1. Mục tiêu
 

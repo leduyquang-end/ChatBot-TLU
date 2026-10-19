@@ -178,7 +178,7 @@ Lợi ích: thay đổi kho dữ liệu chỉ cần sửa `infrastructure`.
 
 ## 5. Module chat: luồng hỏi đáp
 
-Đặc tả: [QT-01](docs/2-ky-thuat/flows/QT-01-hoi-dap-sinh-vien.md).
+Đặc tả: [QT-01](docs/2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md).
 
 ### 5.1. Các bước của một câu hỏi
 
@@ -251,7 +251,7 @@ Không đưa khóa API hay thông tin cá nhân vào prompt.
 
 ## 6. Module nạp tri thức
 
-Đặc tả: [QT-02](docs/2-ky-thuat/flows/QT-02-cap-nhat-tri-thuc-chatbot.md).
+Đặc tả: [QT-02](docs/2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md).
 
 Vị trí mã chưa chốt (P-03 trong kế hoạch). Ghi lại lựa chọn vào [7-ghi-chu](docs/7-ghi-chu/) khi quyết định.
 
@@ -568,8 +568,8 @@ Cách kiểm tra phân quyền: server quyết định, không dựa vào giao d
 
 ### 14.3. Khi đổi kiến trúc
 
-- Cập nhật [kiến trúc](docs/2-ky-thuat/kien-truc-chatbot-tlu.md).
-- Nếu thay đổi làm đổi kế hoạch: cập nhật [kế hoạch](docs/2-ky-thuat/ke-hoach-chatbot-tlu.md).
+- Cập nhật [kiến trúc](docs/2-ky-thuat/Kien_truc_chatbot_tlu.md).
+- Nếu thay đổi làm đổi kế hoạch: cập nhật [kế hoạch](docs/2-ky-thuat/Plan_chatbot_tlu.md).
 - Nếu thay đổi ảnh hưởng người dùng: cập nhật [tổng quan](docs/1-tong-quan/tong-quan-chatbot-tlu.md).
 - Quyết định mới: thêm ADR với mã tiếp theo, ghi lý do và nguồn.
 
@@ -775,10 +775,10 @@ Danh sách này cập nhật khi có quyết định. Trước khi làm việc l
 | ----------------------------------------------------------------- | ------------------------------------------- |
 | [README](README.md)                                               | Cài đặt và chạy                             |
 | [Tổng quan](docs/1-tong-quan/tong-quan-chatbot-tlu.md)            | Mục tiêu, phạm vi, cho người không kỹ thuật |
-| [Kế hoạch](docs/2-ky-thuat/ke-hoach-chatbot-tlu.md)               | Giai đoạn, phụ thuộc, rủi ro                |
-| [Kiến trúc](docs/2-ky-thuat/kien-truc-chatbot-tlu.md)             | Sơ đồ, quyết định kỹ thuật (ADR)            |
-| [QT-01](docs/2-ky-thuat/flows/QT-01-hoi-dap-sinh-vien.md)         | Luồng hỏi đáp                               |
-| [QT-02](docs/2-ky-thuat/flows/QT-02-cap-nhat-tri-thuc-chatbot.md) | Luồng nạp tri thức                          |
+| [Kế hoạch](docs/2-ky-thuat/Plan_chatbot_tlu.md)               | Giai đoạn, phụ thuộc, rủi ro                |
+| [Kiến trúc](docs/2-ky-thuat/Kien_truc_chatbot_tlu.md)             | Sơ đồ, quyết định kỹ thuật (ADR)            |
+| [QT-01](docs/2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md)         | Luồng hỏi đáp                               |
+| [QT-02](docs/2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md) | Luồng nạp tri thức                          |
 
 ---
 

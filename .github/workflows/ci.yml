@@ -1,0 +1,138 @@
+# CI cho ChatBot TLU, chạy trên GitHub Actions.
+#
+# Chạy khi: push lên main, hoặc mở/cập nhật pull request vào main.
+# Kiểm tra: lint và unit test backend, build Docker image backend và frontend,
+#           kiểm tra cú pháp docker-compose.yml.
+#
+# Không dùng khóa thật ở đây. Mọi giá trị trong env chỉ là giả để kiểm tra cú pháp.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Nếu có commit mới trên cùng nhánh, hủy lần chạy cũ để tiết kiệm thời gian
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # ---------------------------------------------------------------
+  # Backend: lint và unit test
+  # ---------------------------------------------------------------
+  backend:
+    name: Backend (lint, unit test)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      PYTHONPATH: ${{ github.workspace }}/backend
+      PYTHONDONTWRITEBYTECODE: "1"
+      # Giá trị giả — chỉ để create_app() khởi động được khi test import src.main
+      GROQ_API_KEY: ci-placeholder
+      QWEN_API_KEY: ci-placeholder
+      HF_TOKEN: ci-placeholder
+      CHROMA_URL: http://localhost:8001
+      NEO4J_URI: bolt://localhost:7687
+      NEO4J_USER: neo4j
+      NEO4J_PASSWORD: ci-placeholder
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Cài Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Cài phụ thuộc
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            echo "Chưa có backend/requirements.txt, bỏ qua bước cài phụ thuộc."
+          fi
+
+      - name: Lint với ruff
+        run: |
+          pip install ruff
+          if [ -d src ]; then
+            ruff check src tests
+          else
+            echo "Chưa có backend/src, bỏ qua lint."
+          fi
+
+      - name: Unit test
+        run: |
+          pip install pytest
+          if [ -d tests/unit ]; then
+            # pytest trả mã 5 khi không tìm thấy test nào. Coi đó là đạt tạm thời.
+            pytest tests/unit -q || [ $? -eq 5 ]
+          else
+            echo "Chưa có backend/tests/unit, bỏ qua unit test."
+          fi
+
+  # ---------------------------------------------------------------
+  # Docker: build image và kiểm tra docker-compose.yml
+  # ---------------------------------------------------------------
+  docker:
+    name: Docker (build, compose config)
+    runs-on: ubuntu-latest
+    env:
+      # Giá trị giả, chỉ để docker compose config không báo thiếu biến
+      NEO4J_PASSWORD: ci-placeholder-not-a-secret
+      GROQ_API_KEY: ci-placeholder
+      QWEN_API_KEY: ci-placeholder
+      HF_TOKEN: ci-placeholder
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Kiểm tra cú pháp docker-compose.yml
+        run: |
+          cp .env.example .env
+          docker compose -f docker-compose.yml config --quiet
+
+      - name: Build image backend
+        run: docker build -t chatbot-tlu-app:ci ./backend
+
+      - name: Build image frontend
+        run: docker build -t chatbot-tlu-web:ci ./frontend
+
+  # ---------------------------------------------------------------
+  # Tài liệu: kiểm tra các liên kết nội bộ trong Markdown
+  # ---------------------------------------------------------------
+  docs:
+    name: Tài liệu (liên kết)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lấy mã nguồn
+        uses: actions/checkout@v4
+
+      - name: Kiểm tra liên kết tương đối trong Markdown
+        run: |
+          set -e
+          status=0
+          # Tìm mọi liên kết dạng ](đường/dẫn.md) hoặc ](đường/dẫn.md#mục) không phải URL
+          while IFS= read -r file; do
+            dir=$(dirname "$file")
+            grep -oE '\]\([^)#]+' "$file" | sed 's/^](//' | grep -vE '^(https?:|mailto:)' | while read -r link; do
+              [ -z "$link" ] && continue
+              if [ ! -e "$dir/$link" ] && [ ! -e "$link" ]; then
+                echo "Liên kết hỏng trong $file: $link"
+                exit 1
+              fi
+            done || status=1
+          done < <(find . -name '*.md' -not -path './.git/*')
+          exit $status

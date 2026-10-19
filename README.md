@@ -2,7 +2,7 @@
 
 Chatbot hỏi đáp bằng tiếng Việt cho sinh viên Trường Đại học Thủy Lợi. Chatbot trả lời dựa trên tài liệu của trường. Khi tài liệu không có thông tin, chatbot nói rõ là không có và gợi ý liên hệ, không tự trả lời theo kiến thức chung.
 
-> **Trạng thái:** đang triển khai. Xem [kế hoạch triển khai](docs/2-ky-thuat/ke-hoach-chatbot-tlu.md) và [kiến trúc](docs/2-ky-thuat/kien-truc-chatbot-tlu.md).
+> **Trạng thái:** đang triển khai. Xem [kế hoạch triển khai](docs/2-ky-thuat/Plan_chatbot_tlu.md) và [kiến trúc](docs/2-ky-thuat/Kien_truc_chatbot_tlu.md).
 
 ---
 
@@ -210,37 +210,32 @@ Chạy mỗi khi sinh viên gửi câu hỏi.
 
 ```
 ChatBot/
-├── AGENTS.md              Quy ước cho người và AI làm việc trên mã nguồn
-├── README.md              File này
-├── docs/                  Tài liệu dự án
-│   ├── 1-tong-quan/       Tổng quan dự án
-│   ├── 2-ky-thuat/        Kỹ thuật
-│   │   ├── ke-hoach-chatbot-tlu.md
-│   │   ├── kien-truc-chatbot-tlu.md
-│   │   └── flows/         Đặc tả quy trình (QT-nn)
-│   ├── 3-san-pham/        Mô tả sản phẩm
-│   ├── 4-van-hanh/        Vận hành
-│   ├── 5-mau/             Mẫu tài liệu (ví dụ phiếu yêu cầu)
-│   ├── 6-design/          Thiết kế
-│   └── 7-ghi-chu/         Ghi chú
-├── scripts/               Lệnh chạy thủ công, gồm lệnh nạp tri thức
-├── src/
-│   ├── modules/           Các tính năng của hệ thống
-│   │   ├── auth/          Xác thực
-│   │   ├── chat/          Hỏi đáp chatbot
-│   │   └── user/          Người dùng (có 4 lớp làm mẫu)
-│   ├── platform/          Hạ tầng kỹ thuật
-│   │   ├── logging/       Ghi log
-│   │   └── security/      Bảo mật
-│   └── shared/            Code dùng chung
-│       ├── common/        Kiểu lỗi, tiện ích
-│       ├── config/        Đọc cấu hình
-│       ├── database/      Kết nối cơ sở dữ liệu
-│       └── events/        Sự kiện
-└── tests/
-    ├── unit/              Kiểm thử đơn vị
-    ├── integration/       Kiểm thử tích hợp (cần dịch vụ thật)
-    └── e2e/               Kiểm thử đầu cuối
+├── AGENT.md                Quy ước cho người và AI làm việc trên mã nguồn
+├── README.md               File này
+├── .env.example            Mẫu biến môi trường
+├── docker-compose.yml      backend + frontend + ChromaDB + Neo4j
+├── docs/                   Tài liệu dự án
+│   ├── 1-tong-quan/
+│   ├── 2-ky-thuat/
+│   │   └── flows/
+│   ├── 3-san-pham/
+│   ├── 4-van-hanh/
+│   ├── 5-mau/
+│   ├── 6-design/
+│   └── 7-ghi-chu/
+├── backend/                Flask API + pipeline nạp tri thức
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── scripts/            Lệnh chạy thủ công (ingest_tlu.py)
+│   ├── src/
+│   │   ├── modules/        auth, chat, user
+│   │   ├── platform/       logging, security
+│   │   └── shared/         common, config, database, events
+│   └── tests/              unit, integration, e2e
+└── frontend/               Giao diện chat
+    ├── Dockerfile          nginx
+    ├── nginx.conf          tệp tĩnh + proxy /api/* → backend
+    └── public/index.html   trang chat
 ```
 
 ### 5.1. Quy ước trong `src/modules/`
@@ -404,8 +399,8 @@ Mở trình duyệt tại [Điền: địa chỉ], đăng nhập bằng tài kho
 
 **Tiêu chí nghiệm thu** nằm trong mục 12 của hai file đặc tả:
 
-- [QT-01](docs/2-ky-thuat/flows/QT-01-hoi-dap-sinh-vien.md): AC-01 đến AC-05.
-- [QT-02](docs/2-ky-thuat/flows/QT-02-cap-nhat-tri-thuc-chatbot.md): AC-01 đến AC-05.
+- [QT-01](docs/2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md): AC-01 đến AC-05.
+- [QT-02](docs/2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md): AC-01 đến AC-05.
 
 ---
 
@@ -466,11 +461,11 @@ Có, để dùng cho câu hỏi tiếp theo trong cùng cuộc trò chuyện. Th
 
 | Tài liệu | Nội dung |
 |----------|----------|
-| [Kế hoạch triển khai](docs/2-ky-thuat/ke-hoach-chatbot-tlu.md) | Giai đoạn, phụ thuộc, rủi ro, câu hỏi mở |
-| [Kiến trúc](docs/2-ky-thuat/kien-truc-chatbot-tlu.md) | Sơ đồ thành phần, quyết định kỹ thuật (ADR) |
-| [QT-01: Sinh viên hỏi đáp](docs/2-ky-thuat/flows/QT-01-hoi-dap-sinh-vien.md) | Luồng hỏi đáp, lỗi, tiêu chí nghiệm thu |
-| [QT-02: Nạp và cập nhật tri thức](docs/2-ky-thuat/flows/QT-02-cap-nhat-tri-thuc-chatbot.md) | Luồng nạp, lỗi, tiêu chí nghiệm thu |
-| [AGENTS.md](AGENTS.md) | Quy ước cho người và AI làm việc trên mã nguồn |
+| [Kế hoạch triển khai](docs/2-ky-thuat/Plan_chatbot_tlu.md) | Giai đoạn, phụ thuộc, rủi ro, câu hỏi mở |
+| [Kiến trúc](docs/2-ky-thuat/Kien_truc_chatbot_tlu.md) | Sơ đồ thành phần, quyết định kỹ thuật (ADR) |
+| [QT-01: Sinh viên hỏi đáp](docs/2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md) | Luồng hỏi đáp, lỗi, tiêu chí nghiệm thu |
+| [QT-02: Nạp và cập nhật tri thức](docs/2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md) | Luồng nạp, lỗi, tiêu chí nghiệm thu |
+| [AGENTS.md](AGENT.md) | Quy ước cho người và AI làm việc trên mã nguồn |
 
 ---
 

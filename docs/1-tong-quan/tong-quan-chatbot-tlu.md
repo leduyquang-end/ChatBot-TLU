@@ -69,11 +69,11 @@ Nếu không tìm thấy thông tin phù hợp, hệ thống trả lời rằng 
 | Cách lưu tri thức | Hai kho: một kho theo nội dung và một kho theo quan hệ giữa các mục | Mỗi loại câu hỏi cần cách tìm khác nhau |
 | Cập nhật tri thức | Nạp theo đợt, không xóa dữ liệu cũ | Có thể nạp thêm tài liệu mà không làm lại từ đầu |
 
-Chi tiết kỹ thuật xem tại [kiến trúc](../2-ky-thuat/kien-truc-chatbot-tlu.md).
+Chi tiết kỹ thuật xem tại [kiến trúc](../2-ky-thuat/Kien_truc_chatbot_tlu.md).
 
 ## 7. Tiến độ và mốc
 
-Chưa có mốc thời gian cụ thể. Kế hoạch chia thành sáu giai đoạn: chuẩn bị, nền tảng, nạp tri thức, trả lời, giao diện, kiểm thử và vận hành. Chi tiết tại [kế hoạch triển khai](../2-ky-thuat/ke-hoach-chatbot-tlu.md).
+Chưa có mốc thời gian cụ thể. Kế hoạch chia thành sáu giai đoạn: chuẩn bị, nền tảng, nạp tri thức, trả lời, giao diện, kiểm thử và vận hành. Chi tiết tại [kế hoạch triển khai](../2-ky-thuat/Plan_chatbot_tlu.md).
 
 | Giai đoạn | Nội dung | Trạng thái |
 |-----------|----------|------------|
@@ -116,10 +116,10 @@ Chưa có mốc thời gian cụ thể. Kế hoạch chia thành sáu giai đo�
 
 | Tài liệu | Nội dung |
 |----------|----------|
-| [Kế hoạch triển khai](../2-ky-thuat/ke-hoach-chatbot-tlu.md) | Các giai đoạn, phụ thuộc, rủi ro chi tiết |
-| [Kiến trúc](../2-ky-thuat/kien-truc-chatbot-tlu.md) | Sơ đồ kỹ thuật và các quyết định |
-| [QT-01: Sinh viên hỏi đáp](../2-ky-thuat/flows/QT-01-hoi-dap-sinh-vien.md) | Luồng hỏi đáp và tiêu chí nghiệm thu |
-| [QT-02: Nạp và cập nhật tri thức](../2-ky-thuat/flows/QT-02-cap-nhat-tri-thuc-chatbot.md) | Luồng nạp tri thức và tiêu chí nghiệm thu |
+| [Kế hoạch triển khai](../2-ky-thuat/Plan_chatbot_tlu.md) | Các giai đoạn, phụ thuộc, rủi ro chi tiết |
+| [Kiến trúc](../2-ky-thuat/Kien_truc_chatbot_tlu.md) | Sơ đồ kỹ thuật và các quyết định |
+| [QT-01: Sinh viên hỏi đáp](../2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md) | Luồng hỏi đáp và tiêu chí nghiệm thu |
+| [QT-02: Nạp và cập nhật tri thức](../2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md) | Luồng nạp tri thức và tiêu chí nghiệm thu |
 | [README](../../README.md) | Hướng dẫn cài đặt và chạy |
 
 ## Lịch sử thay đổi

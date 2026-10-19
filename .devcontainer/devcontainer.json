@@ -1,0 +1,54 @@
+{
+  // Môi trường lập trình trong VS Code (Dev Containers).
+  // Cách dùng: mở thư mục ChatBot/ trong VS Code, chọn "Reopen in Container".
+  // Yêu cầu máy: VS Code, extension "Dev Containers", và Docker Desktop hoặc Docker Engine.
+  "name": "ChatBot TLU",
+
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bookworm",
+
+  "features": {
+    // Cho phép chạy lệnh docker và docker compose từ bên trong container
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
+  },
+
+  // Đường dẫn import bắt đầu từ backend/, khớp với cách chạy trong Docker (/app)
+  "remoteEnv": {
+    "PYTHONPATH": "${containerWorkspaceFolder}/backend",
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "PIP_DISABLE_PIP_VERSION_CHECK": "1"
+  },
+
+  // Chạy một lần sau khi tạo container
+  // - tạo .env từ mẫu nếu chưa có (điền khóa thật vào sau)
+  // - cài phụ thuộc backend nếu đã có requirements.txt
+  "postCreateCommand": "[ -f .env ] || cp .env.example .env; if [ -f backend/requirements.txt ]; then pip install --user -r backend/requirements.txt; else echo 'Chưa có backend/requirements.txt, bỏ qua bước cài phụ thuộc.'; fi",
+
+  // Cổng để trình duyệt truy cập từ máy bạn
+  "forwardPorts": [8000, 8080],
+  "portsAttributes": {
+    "8000": { "label": "Backend API" },
+    "8080": { "label": "Giao diện web (qua Docker Compose)" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-azuretools.vscode-docker",
+        "redhat.vscode-yaml",
+        "EditorConfig.EditorConfig",
+        "davidanson.vscode-markdownlint"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.pytestArgs": ["backend/tests"],
+        "files.eol": "\n",
+        "editor.formatOnSave": true
+      }
+    }
+  },
+
+  "remoteUser": "vscode"
+}
