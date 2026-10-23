@@ -38,6 +38,13 @@ class ExternalServiceError(AppError):
     http_status = 503
 
 
+class InternalError(AppError):
+    """Lỗi không mong đợi — đã ghi log, người dùng chỉ thấy thông báo chung."""
+
+    code = "INTERNAL_ERROR"
+    http_status = 500
+
+
 class NoRelevantContextError(AppError):
     """Không có thông tin phù hợp trong kho tri thức (ADR-09)."""
 

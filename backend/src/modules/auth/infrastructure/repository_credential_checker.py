@@ -1,18 +1,17 @@
 from __future__ import annotations
 
-from src.modules.user.domain.user import User
-from src.modules.user.infrastructure.in_memory_user_repository import (
-    InMemoryUserRepository,
-    get_user_repository,
-)
+from src.modules.auth.application.ports.credential_checker import CredentialRepository
+from src.modules.auth.application.ports.user_lookup import UserRecord
 
 
 class RepositoryCredentialChecker:
-    def __init__(self, repository: InMemoryUserRepository | None = None) -> None:
-        self._repository = repository or get_user_repository()
+    """Cài CredentialChecker qua repository truyền vào — không biết module user."""
 
-    def check(self, username: str, password: str) -> bool:
-        return self._repository.check_password(username, password)
+    def __init__(self, repository: CredentialRepository) -> None:
+        self._repository = repository
 
-    def find_user(self, username: str) -> User | None:
-        return self._repository.find_by_username(username)
+    def check(self, username: str, password: str) -> UserRecord | None:
+        user = self._repository.find_by_username(username)
+        if user is None or not self._repository.check_password(username, password):
+            return None
+        return user

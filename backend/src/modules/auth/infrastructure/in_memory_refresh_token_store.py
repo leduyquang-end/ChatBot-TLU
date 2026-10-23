@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import secrets
+import threading
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 
@@ -48,13 +49,16 @@ class InMemoryRefreshTokenStore:
 
 
 _STORE: InMemoryRefreshTokenStore | None = None
+_STORE_LOCK = threading.Lock()
 
 
 def get_refresh_token_store() -> InMemoryRefreshTokenStore:
-    """Singleton — phiên phải sống qua nhiều request, không tạo lại mỗi lần gọi."""
+    """Singleton an toàn luồng — phiên phải sống qua nhiều request, không tạo lại mỗi lần gọi."""
     global _STORE
     if _STORE is None:
-        _STORE = InMemoryRefreshTokenStore(
-            ttl_seconds=get_settings().refresh_token_ttl_hours * 3600,
-        )
+        with _STORE_LOCK:
+            if _STORE is None:
+                _STORE = InMemoryRefreshTokenStore(
+                    ttl_seconds=get_settings().refresh_token_ttl_hours * 3600,
+                )
     return _STORE

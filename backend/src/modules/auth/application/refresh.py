@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 
 from src.modules.auth.application.ports.refresh_token_store import RefreshTokenStore
 from src.modules.auth.application.ports.token_issuer import TokenIssuerPort
-from src.modules.user.application.ports.user_repository import UserRepository
+from src.modules.auth.application.ports.user_lookup import UserLookup
 from src.shared.common.errors import UnauthorizedError
 
 
@@ -38,7 +38,7 @@ class RefreshTokenUseCase:
         self,
         store: RefreshTokenStore,
         token_issuer: TokenIssuerPort,
-        users: UserRepository,
+        users: UserLookup,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self._store = store

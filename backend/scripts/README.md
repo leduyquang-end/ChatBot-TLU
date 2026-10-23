@@ -5,10 +5,13 @@
 ## `ingest_tlu.py` — Nạp tài liệu vào kho (QT-02)
 
 ```bash
+python backend/scripts/ingest_tlu.py data             # từ repo root (khuyến nghị)
 cd backend
 python scripts/ingest_tlu.py              # mặc định: <repo>/data/source
 python scripts/ingest_tlu.py path/to/dir  # thư mục tùy chọn
 ```
+
+Lưu ý: file `.doc` (Word 97-2003) chỉ đọc được khi máy có Microsoft Word (Windows) — file hỏng sẽ vào `documents_failed` của báo cáo.
 
 ### Lệnh này làm gì?
 

@@ -27,3 +27,12 @@ Chứa các công cụ bảo mật dùng chung: mã hóa mật khẩu, tạo và
 4. Server dùng `APP_SECRET` để verify token có bị làm giả không
 
 **Lưu ý quan trọng:** `APP_SECRET` phải được thay đổi khi lên môi trường thật (production). Nếu không đổi, ai đó có thể tự tạo thẻ giả mạo.
+
+## Ghi chú kỹ thuật
+
+- **Đồng hồ token:** `issue_token`/`verify_token` dùng `time.time()` (đồng hồ tường epoch) — nhất quán giữa mọi worker/process/máy. (Trước đây dùng `os.times().elapsed` = 0.0 cố định trên Windows → token không bao giờ hết hạn.)
+- **So sánh chữ ký:** dạng bytes qua `hmac.compare_digest` — chuỗi không phải ASCII không làm ném `TypeError` (trước là lỗi 500).
+- **Mật khẩu:** PBKDF2-SHA256 200.000 vòng, salt 16 byte ngẫu nhiên; mật khẩu bị cắt ở 1024 ký tự (cả hash lẫn verify) để không lạm dụng CPU.
+- **Thiếu `APP_SECRET`:** fallback secret dev + cảnh báo một lần `event=security.default_secret` (AGENT.md 11.1 — chỉ đọc từ môi trường). Secret toàn khoảng trắng cũng bị coi là thiếu.
+- **`APP_SECRET` quá ngắn** (< 16 ký tự): vẫn dùng nhưng cảnh báo một lần `event=security.weak_secret` (dễ bị dò để giả chữ ký).
+- `sanitize_input`: lọc ký tự điều khiển (giữ `\n`, `\t`), cắt đúng `max_length`, bỏ khoảng trắng sót do cắt.

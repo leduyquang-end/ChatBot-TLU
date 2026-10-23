@@ -2,7 +2,7 @@
 
 Hướng dẫn cho người và trợ lý AI làm việc trên mã nguồn dự án ChatBot TLU. Đọc toàn bộ file này trước khi sửa bất kỳ tệp nào.
 
-> Phiên bản: 1.1 - 2026-10-13
+> Phiên bản: 1.2 - 2026-10-19
 > File này thay thế `CLAUDE.md`. Không tạo `CLAUDE.md` song song.
 > Nguyên tắc ưu tiên: **nếu không chắc, hỏi hoặc ghi câu hỏi. Đừng đoán.**
 
@@ -55,7 +55,7 @@ Chi tiết xem [README](README.md) và [tổng quan](docs/1-tong-quan/tong-quan-
 | Vector             | Biểu diễn số của đoạn, 768 chiều                       | Dùng để tìm theo nghĩa                            |
 | Thực thể (entity)  | Node trong đồ thị: môn học, ngành, học phí...          | Có tên, mô tả, loại                               |
 | Quan hệ (edge)     | Cạnh nối hai thực thể                                  | Có mô tả và độ tin cậy                            |
-| Router             | Bước chọn cách tìm cho mỗi câu hỏi                     | Dùng Llama-3.3-70B qua Groq                       |
+| Router             | Bước chọn cách tìm cho mỗi câu hỏi                     | Dùng Qwen3.8-27B qua Groq                        |
 | Cách tìm           | Một trong bốn nhãn: Vector, Graph, Hybrid, None        | Xem mục 5.2                                       |
 | MMR                | Thuật toán chọn đoạn vừa liên quan vừa đa dạng         | Maximal Marginal Relevance                        |
 | MERGE              | Lệnh Cypher: tạo nếu chưa có, bỏ qua nếu đã có         | Giúp chạy lại không trùng                         |
@@ -296,7 +296,7 @@ Vị trí mã chưa chốt (P-03 trong kế hoạch). Ghi lại lựa chọn và
 
 | Dịch vụ              | Dùng cho                                                  | Biến cấu hình                               | Giới hạn                       |
 | -------------------- | --------------------------------------------------------- | ------------------------------------------- | ------------------------------ |
-| Groq (Llama-3.3-70B) | Router, xác định loại thực thể, trích thực thể từ câu hỏi | `GROQ_API_KEY`                              | [Điền: hạn mức]                |
+| Groq (Qwen3.8-27B) | Router, xác định loại thực thể, trích thực thể từ câu hỏi | `GROQ_API_KEY`                              | [Điền: hạn mức]                |
 | Qwen3-235B-A22B      | Trích thực thể khi nạp, sinh câu trả lời                  | `QWEN_API_KEY`                              | [Điền: hạn mức]                |
 | Hugging Face         | Tải `bkai-foundation-models/vietnamese-bi-encoder`        | `HF_TOKEN`                                  | Giới hạn 256 token mỗi đầu vào |
 | ChromaDB             | Kho tìm theo nội dung                                     | `CHROMA_URL`                                | [Điền]                         |
@@ -304,8 +304,8 @@ Vị trí mã chưa chốt (P-03 trong kế hoạch). Ghi lại lựa chọn và
 
 ### 7.1. Quy tắc khi gọi dịch vụ
 
-- Mọi lần gọi có thời gian chờ. Giá trị: [Điền: giây].
-- Thử lại có giới hạn: tối đa [Điền] lần, khoảng chờ tăng dần.
+- Mọi lần gọi có thời gian chờ. Giá trị: `REQUEST_TIMEOUT_SECONDS` (mặc định 30 giây).
+- Thử lại có giới hạn: tối đa `MAX_RETRIES` lần (mặc định 3), khoảng chờ tăng dần theo `RETRY_BACKOFF_SECONDS` (mặc định 0.5 giây).
 - Chỉ thử lại với lỗi tạm thời (timeout, 429, 5xx). Lỗi xác thực (401, 403) thì dừng và báo.
 - Ghi mã lỗi và thời gian. Không ghi nội dung câu hỏi, không ghi khóa.
 - Không gọi dịch vụ trong vòng lặp không có giới hạn.
@@ -316,8 +316,8 @@ Vị trí mã chưa chốt (P-03 trong kế hoạch). Ghi lại lựa chọn và
 | Dịch vụ  | Hành vi mong muốn                                 | Người dùng thấy                                           |
 | -------- | ------------------------------------------------- | --------------------------------------------------------- |
 | Groq     | Dùng nhánh `Vector` nếu router không trả lời      | Không thấy lỗi                                            |
-| Qwen     | Trả thông báo tạm thời, không cố sinh câu trả lời | "Hệ thống đang bận, bạn thử lại sau" (chờ xác nhận, Q-04) |
-| ChromaDB | Ghi log lỗi, trả thông báo tạm thời               | Chờ xác nhận (Q-04)                                       |
+| Qwen     | Trả thông báo tạm thời, không cố sinh câu trả lời | "Hệ thống đang bận, bạn thử lại sau" (đã chốt 2026-10-19) |
+| ChromaDB | Ghi log lỗi, trả thông báo tạm thời               | Cùng thông báo tạm thời như trên                          |
 | Neo4j    | Chỉ dùng `Vector` cho đến khi phục hồi            | Không thấy lỗi nếu `Vector` đủ                            |
 
 ---
@@ -348,9 +348,10 @@ Vị trí mã chưa chốt (P-03 trong kế hoạch). Ghi lại lựa chọn và
 | `FETCH_K`         |  Không   | `10`     |                          |
 | `TOP_K`           |  Không   | `5`      |                          |
 | `ALPHA`           |  Không   | `0.7`    | Trong khoảng 0.6 đến 0.8 |
-| `DEDUP_THRESHOLD` |  Không   | `0.92`   |                          |
-
-[Điền: thêm biến nếu có, ví dụ thời gian chờ, số lần thử lại.]
+| `DEDUP_THRESHOLD` |    Không   | `0.92`   |                          |
+| `REQUEST_TIMEOUT_SECONDS` | Không | `30` | Thời gian chờ mỗi lần gọi dịch vụ (giây) |
+| `MAX_RETRIES`     |    Không   | `3`      | Số lần thử lại cho lỗi tạm thời (429/5xx/timeout) |
+| `RETRY_BACKOFF_SECONDS` | Không | `0.5` | Khoảng chờ ban đầu giữa các lần thử (giây), tăng dần theo lũy thừa 2 |
 
 ### 8.3. File mẫu
 
@@ -750,7 +751,7 @@ Danh sách này cập nhật khi có quyết định. Trước khi làm việc l
 | ---- | ------------------------------------------- | ------------------ | ------------ |
 | Q-01 | Ai yêu cầu và duyệt                         | Phạm vi, ưu tiên   | QT-01, QT-02 |
 | Q-03 | Đơn vị nào được ghi khi không có thông tin  | Nội dung thông báo | QT-01        |
-| Q-04 | Xử lý khi dịch vụ lỗi                       | Mục 7.2            | QT-01, QT-02 |
+| Q-04 | ~~Xử lý khi dịch vụ lỗi~~ Đã chốt 2026-10-19: trả 503 với "Hệ thống đang bận, bạn thử lại sau" | Mục 7.2 | QT-01, QT-02 |
 | Q-05 | Xử lý khi bước trích thực thể sai định dạng | Mục 6              | QT-02        |
 | Q-06 | Rollback khi ghi kho lỗi giữa chừng         | Mục 6              | QT-02        |
 | Q-06 | Có ghi audit câu hỏi không                  | Mục 10             | QT-01        |
@@ -782,4 +783,4 @@ Danh sách này cập nhật khi có quyết định. Trước khi làm việc l
 
 ---
 
-_Phiên bản 1.1, ngày 2026-10-13. Cập nhật khi cấu trúc, quy ước, hoặc lệnh thay đổi. Các mục có [Điền] cần bổ sung khi có mã nguồn thật._
+_Phiên bản 1.2, ngày 2026-10-19. Cập nhật khi cấu trúc, quy ước, hoặc lệnh thay đổi. Các mục có [Điền] cần bổ sung khi có mã nguồn thật._

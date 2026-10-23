@@ -10,5 +10,5 @@ Giống như trong một văn phòng chung: máy in, điều hòa, bảng chỉ 
 |---------|---------|
 | `common/` | Bảng chỉ dẫn lỗi — định nghĩa các loại lỗi mà chương trình ném ra (ví dụ: "sai mật khẩu", "không tìm thấy") |
 | `config/` | Sổ tay cấu hình — đọc biến môi trường (`.env`) để biết địa chỉ máy chủ, mã khóa… |
-| `database/` | Nơi kết nối cơ sở dữ liệu (hiện chưa dùng — đang lưu tạm trong RAM) |
-| `events/` | Nơi xử lý sự kiện nội bộ (hiện chưa dùng) |
+| `database/` | Kết nối cơ sở dữ liệu (hiện hỗ trợ SQLite — chuẩn bị cho MySQL/PostgreSQL) |
+| `events/` | Sự kiện nội bộ: bus pub/sub (`EventBus`) + định nghĩa sự kiện dùng chung |

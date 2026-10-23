@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from functools import lru_cache
 
 from src.shared.common.errors import ConfigError
-
-_TRUE = {"1", "true", "yes", "on"}
 
 
 def _env(name: str, default: str | None = None, *, required: bool = False) -> str:
@@ -59,20 +57,26 @@ class Settings:
     no_info_threshold: float = 0.15
     request_timeout_seconds: int = 30
     max_retries: int = 3
+    retry_backoff_seconds: float = 0.5
     history_max_turns: int = 10
     question_max_length: int = 2000
     chroma_collection: str = "tlu_chunks"
+    database_url: str = "sqlite:///data/chatbot_tlu.db"
     embedding_model: str = "bkai-foundation-models/vietnamese-bi-encoder"
-    router_model: str = "llama-3.3-70b-versatile"
+    router_model: str = "qwen/qwen3.8-27b"
     answer_model: str = "qwen3-235b-a22b"
     qwen_base_url: str = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
-    extra: dict = field(default_factory=dict)
 
     @classmethod
     def from_env(cls) -> Settings:
         return cls(
             groq_api_key=_env("GROQ_API_KEY", required=True),
             qwen_api_key=_env("QWEN_API_KEY", required=True),
+            qwen_base_url=_env(
+                "QWEN_BASE_URL",
+                "https://dashscope-intl.aliyuncs.com/compatible-mode/v1",
+            ).rstrip("/"),
+            answer_model=_env("ANSWER_MODEL", "qwen3-235b-a22b"),
             hf_token=_env("HF_TOKEN", required=True),
             chroma_url=_env("CHROMA_URL", required=True).rstrip("/"),
             neo4j_uri=_env("NEO4J_URI", required=True),
@@ -92,8 +96,10 @@ class Settings:
             no_info_threshold=_env_float("NO_INFO_THRESHOLD", 0.15),
             request_timeout_seconds=_env_int("REQUEST_TIMEOUT_SECONDS", 30),
             max_retries=_env_int("MAX_RETRIES", 3),
+            retry_backoff_seconds=_env_float("RETRY_BACKOFF_SECONDS", 0.5),
             history_max_turns=_env_int("HISTORY_MAX_TURNS", 10),
             question_max_length=_env_int("QUESTION_MAX_LENGTH", 2000),
+            database_url=_env("DATABASE_URL", "sqlite:///data/chatbot_tlu.db"),
         )
 
 

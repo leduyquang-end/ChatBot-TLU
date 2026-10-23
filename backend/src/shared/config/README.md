@@ -22,11 +22,17 @@ Ba việc chính:
 |------|-----------|---------|
 | `GROQ_API_KEY` | Có | Mã khóa gọi Groq (AI phân loại câu hỏi) |
 | `QWEN_API_KEY` | Có | Mã khóa gọi Qwen (AI sinh trả lời) |
+| `QWEN_BASE_URL` | Không | Endpoint LLM OpenAI-compatible (mặc định DashScope; có thể trỏ sang OpenRouter) |
+| `ANSWER_MODEL` | Không | Tên model sinh trả lời/trích xuất (mặc định `qwen3-235b-a22b`) |
 | `HF_TOKEN` | Có | Mã khóa tải model nhúng (biến câu hỏi thành số) |
 | `CHROMA_URL` | Có | Địa chỉ ChromaDB (kho vector) |
 | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Có | Thông tin kết nối Neo4j (kho đồ thị) |
+| `APP_SECRET` | Có khi chạy thật | Khóa ký token HMAC (thiếu → secret dev + cảnh báo; nên ≥ 16 ký tự) |
 | `APP_PORT` | Không | Cổng chạy server (mặc định 8000) |
 | `LOG_LEVEL` | Không | Mức độ chi tiết log (mặc định INFO) |
+| `DATABASE_URL` | Không | Chuỗi kết nối CSDL (mặc định `sqlite:///data/chatbot_tlu.db`) |
 | `REFRESH_TOKEN_TTL_HOURS` | Không | Thời hạn refresh token theo giờ (mặc định 720 = 30 ngày) |
+| `RETRY_BACKOFF_SECONDS` | Không | Thời gian chờ giữa các lần thử lại dịch vụ ngoài (mặc định 0.5) |
+| `EMBEDDING_MAX_TOKENS` | Không | Số token tối đa khi nhúng văn bản (mặc định 256) |
 
 **Khi code theo:** Không đọc `os.environ` trực tiếp ở nơi khác — luôn dùng `get_settings()` để đảm bảo mọi giá trị đều qua một cửa sổ kiểm tra.

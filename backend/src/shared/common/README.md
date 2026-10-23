@@ -21,6 +21,7 @@ Chứa lớp cơ sở `AppError` và các lớp con. Mỗi loại lỗi có **m�
 | `ExternalServiceError` | 503 | Dịch vụ bên ngoài lỗi (AI, Chroma, Neo4j) |
 | `NoRelevantContextError` | 200 | Không có tài liệu nào phù hợp để trả lời (xem ADR-09) |
 | `ConfigError` | 500 | Thiếu hoặc sai cấu hình khi khởi động chương trình |
+| `InternalError` | 500 | Lỗi không mong đợi — đã ghi log, người dùng chỉ thấy thông báo chung |
 
 ## Cách hoạt động
 

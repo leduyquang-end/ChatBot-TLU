@@ -8,8 +8,16 @@
 
 ```python
 class CredentialChecker(Protocol):
-    def check(self, username: str, password: str) -> bool: ...
-    def find_user(self, username: str) -> User | None: ...
+    def check(self, username: str, password: str) -> UserRecord | None: ...
+```
+
+`UserRecord` (trong `user_lookup.py`) là Protocol chỉ có `id` + `role` — auth **không import entity** của module user.
+
+### `user_lookup.py`
+
+```python
+class UserLookup(Protocol):
+    def find_by_id(self, user_id: str) -> UserRecord | None: ...
 ```
 
 ### `token_issuer.py`

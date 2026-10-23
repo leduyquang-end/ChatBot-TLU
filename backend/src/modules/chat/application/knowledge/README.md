@@ -2,7 +2,7 @@
 
 ## Mục đích
 
-Biến tài liệu thô (`data/source/`: md, docx, pdf…) thành: chunk trong **ChromaDB** + thực thể/quan hệ trong **Neo4j**.
+Biến tài liệu thô (`data/`: pdf, docx, doc Word 97-2003, md…) thành: chunk trong **ChromaDB** + thực thể/quan hệ trong **Neo4j**.
 
 Giống như **thủ thư** xử lý sách mới mua về:
 1. Mở sách ra, đọc (load)
@@ -15,7 +15,7 @@ Giống như **thủ thư** xử lý sách mới mua về:
 
 | File | Việc làm |
 |------|----------|
-| `loaders.py` | Đọc file theo phần mở rộng → text thuần |
+| `loaders.py` | Đọc file theo phần mở rộng → text thuần (`.doc` convert qua Word COM, chỉ chạy trên Windows) |
 | `cleaning.py` | Làm sạch text (thừa khoảng trắng, ký tự xấu…) |
 | `chunking.py` | Cắt text thành chunk ~`chunk_size` ký tự, overlap `chunk_overlap` |
 | `table_processing.py` | Xử lý bảng trong tài liệu |
@@ -26,6 +26,7 @@ Giống như **thủ thư** xử lý sách mới mua về:
 
 ```
 duyệt mọi file trong source_dir
+   (bỏ qua file ẩn, thư mục processed/ — output của dump_knowledge)
    → load_document()
    → clean + chunk (nhiều chunk / file)
    → embed → vector_store.add(chunks)          → Chroma
@@ -33,12 +34,14 @@ duyệt mọi file trong source_dir
    → merge_entities (dedup)
    → graph_writer.write(entities, relations)   → Neo4j
    → IngestReport {documents_ok, failed, chunk_count, entity_count, ...}
+   → event_bus.publish(KnowledgeIngested)      → audit log (chỉ số liệu)
 ```
 
 ## Chạy
 
 ```bash
-python scripts/ingest_tlu.py [thư mục]   # từ backend/, mặc định <repo>/data/source
+python backend/scripts/ingest_tlu.py data             # từ repo root, cả 3 thư mục con
+python backend/scripts/ingest_tlu.py "data/Sổ tay sinh viên"   # một thư mục
 ```
 
 ## Khi code theo

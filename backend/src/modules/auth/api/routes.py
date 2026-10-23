@@ -12,10 +12,13 @@ from src.modules.auth.infrastructure.in_memory_refresh_token_store import (
 from src.modules.auth.infrastructure.repository_credential_checker import (
     RepositoryCredentialChecker,
 )
+
+# Composition root: nơi duy nhất auth chạm tới module user (bơm repository vào adapter)
 from src.modules.user.infrastructure.in_memory_user_repository import (
     get_user_repository,
 )
 from src.shared.common.errors import ValidationError
+from src.shared.events import get_event_bus
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -44,9 +47,10 @@ def login():
 
     # Bước 3: Gọi use case (logic nghiệp vụ nằm ở LoginUseCase, không ở route)
     use_case = LoginUseCase(
-        checker=RepositoryCredentialChecker(),
+        checker=RepositoryCredentialChecker(get_user_repository()),
         token_issuer=HmacTokenIssuer(),
         store=get_refresh_token_store(),
+        event_bus=get_event_bus(),
     )
     result = use_case.execute(username.strip(), password)
 

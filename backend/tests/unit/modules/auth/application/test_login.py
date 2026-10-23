@@ -6,6 +6,7 @@ from src.modules.auth.application.login import LoginResult, LoginUseCase
 from src.modules.auth.domain.refresh_token import RefreshToken
 from src.modules.user.domain.user import User
 from src.shared.common.errors import UnauthorizedError
+from src.shared.events import EventBus, UserLoggedIn
 
 NOW = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
 
@@ -17,11 +18,8 @@ class FakeChecker:
         self._valid = valid
         self._user = user
 
-    def check(self, username: str, password: str) -> bool:
-        return self._valid
-
-    def find_user(self, username: str) -> User | None:
-        return self._user
+    def check(self, username: str, password: str) -> User | None:
+        return self._user if self._valid else None
 
 
 class FakeTokenIssuer:
@@ -74,6 +72,7 @@ def make_use_case(
         checker=FakeChecker(valid=valid, user=user),
         token_issuer=issuer,
         store=store,
+        event_bus=EventBus(),
     )
     return use_case, issuer, store
 
@@ -135,3 +134,34 @@ def test_khong_tiet_lo_buoc_sai_tai_thong_diep():
         uc2.execute("u", "p")
     assert e1.value.message == msg
     assert e2.value.message == msg
+
+
+def test_login_thanh_cong_phat_su_kien_user_logged_in():
+    bus = EventBus()
+    received: list[UserLoggedIn] = []
+    bus.subscribe(UserLoggedIn, received.append)
+
+    LoginUseCase(
+        checker=FakeChecker(user=DEMO_USER),
+        token_issuer=FakeTokenIssuer(),
+        store=FakeStore(),
+        event_bus=bus,
+    ).execute("sinhvien01", "demo-password")
+
+    assert received == [UserLoggedIn(user_id="u-001", role="student")]
+
+
+def test_login_that_bai_khong_phat_su_kien():
+    bus = EventBus()
+    received: list[UserLoggedIn] = []
+    bus.subscribe(UserLoggedIn, received.append)
+
+    with pytest.raises(UnauthorizedError):
+        LoginUseCase(
+            checker=FakeChecker(valid=False, user=None),
+            token_issuer=FakeTokenIssuer(),
+            store=FakeStore(),
+            event_bus=bus,
+        ).execute("sinhvien01", "sai")
+
+    assert received == []

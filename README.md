@@ -37,7 +37,7 @@ Mục tiêu: giúp sinh viên tra cứu nhanh các quy định, học phí, ngà
 - Nạp tài liệu của trường từ trang web, file DOCX, PDF và bảng XLSX.
 - Hai kho tri thức: một kho tìm theo nội dung và một kho thực thể với quan hệ giữa chúng.
 - Trả lời câu hỏi tiếng Việt, có nhớ ngữ cảnh trong cùng cuộc trò chuyện.
-- Giao diện chat trên web (Flask).
+- Giao diện web (HTML/CSS/JS, phục vụ bởi nginx) gọi API backend qua `/api`.
 - Ghi nhật ký các sự kiện chính.
 
 **Ngoài phạm vi hiện tại:**
@@ -232,10 +232,14 @@ ChatBot/
 │   │   ├── platform/       logging, security
 │   │   └── shared/         common, config, database, events
 │   └── tests/              unit, integration, e2e
-└── frontend/               Giao diện chat
+└── frontend/               Giao diện web
     ├── Dockerfile          nginx
     ├── nginx.conf          tệp tĩnh + proxy /api/* → backend
-    └── public/index.html   trang chat
+    └── public/
+        ├── index.html      khung trang (đăng nhập, chat, hồ sơ, quản trị)
+        ├── styles.css      giao diện responsive
+        ├── api.js          gọi API + tự làm mới token
+        └── app.js          điều khiển giao diện
 ```
 
 ### 5.1. Quy ước trong `src/modules/`
@@ -263,14 +267,15 @@ Vị trí pipeline nạp tri thức chưa chốt: trong `modules/chat/applicatio
 
 | Thành phần | Yêu cầu |
 |------------|---------|
-| Ngôn ngữ và runtime | [Điền: phiên bản] |
-| ChromaDB | Đang chạy, có địa chỉ truy cập |
-| Neo4j | Đang chạy, có địa chỉ và tài khoản |
+| Ngôn ngữ và runtime | Python 3.11; Node.js 18+ chỉ cần khi kiểm tra cú pháp giao diện |
+| Docker | Docker Desktop / Docker Engine + Docker Compose v2 |
+| ChromaDB | Chạy bằng Docker Compose, cổng nội bộ `8000` (máy host `8001`) |
+| Neo4j | Chạy bằng Docker Compose, `bolt://localhost:7687`, giao diện `http://localhost:7474` |
 | Groq | Khóa API, còn hạn mức |
-| Qwen API | Khóa API, còn hạn mức |
-| Hugging Face | Token truy cập để tải `bkai-foundation-models/vietnamese-bi-encoder` |
-| Hệ điều hành | [Điền] |
-| Phần cứng | [Điền: nếu có GPU cho embedding hay không] |
+| Qwen / OpenRouter | Khóa API, còn hạn mức |
+| Hugging Face | Token là tùy chọn; mô hình `bkai-foundation-models/vietnamese-bi-encoder` là công khai |
+| Hệ điều hành | Windows 10/11, Linux hoặc macOS có Docker |
+| Phần cứng | Tối thiểu 4 GB RAM trống cho stack; không cần GPU (torch bản CPU trong image) |
 
 ---
 
@@ -283,14 +288,17 @@ Mọi khóa API và địa chỉ dịch vụ đặt trong biến môi trường,
 | Biến | Bắt buộc | Mục đích |
 |------|:--------:|----------|
 | `GROQ_API_KEY` | Có | Khóa Groq cho router và trích thực thể từ câu hỏi |
-| `QWEN_API_KEY` | Có | Khóa Qwen API cho trích thực thể khi nạp và sinh câu trả lời |
-| `HF_TOKEN` | Có | Token Hugging Face để tải mô hình embedding |
-| `CHROMA_URL` | Có | Địa chỉ ChromaDB |
-| `NEO4J_URI` | Có | Địa chỉ Neo4j |
+| `QWEN_API_KEY` | Có | Khóa Qwen/OpenRouter cho trích thực thể khi nạp và sinh câu trả lời |
+| `HF_TOKEN` | Không | Token Hugging Face; giá trị mẫu `your-...` được coi như chưa cấu hình |
+| `APP_SECRET` | Có khi chạy thật | Khóa ký access/refresh token, tối thiểu 32 ký tự ngẫu nhiên |
+| `APP_PORT` | Không | Cổng API trên máy host (mặc định `8010`) |
+| `FRONTEND_PORT` | Không | Cổng giao diện trên máy host (mặc định `8080`) |
+| `CHROMA_URL` | Có | Địa chỉ ChromaDB (`http://localhost:8001` khi chạy ngoài Docker) |
+| `NEO4J_URI` | Có | Địa chỉ Neo4j (`bolt://localhost:7687`) |
 | `NEO4J_USER` | Có | Tài khoản Neo4j |
 | `NEO4J_PASSWORD` | Có | Mật khẩu Neo4j |
-
-[Điền: tên biến thực tế nếu khác với bảng trên.]
+| `QWEN_BASE_URL` | Không | Base URL tương thích OpenAI; mặc định DashScope |
+| `ANSWER_MODEL` | Không | Tên model sinh câu trả lời, nhiều model cách nhau dấu phẩy để fallback |
 
 ### 7.2. Tham số thuật toán
 
@@ -312,28 +320,41 @@ Các tham số này nên đặt trong cấu hình (`src/shared/config/`), không
 
 ## 8. Cài đặt
 
-Các bước dưới đây cần bổ sung khi có mã nguồn.
-
 ```bash
 # 1. Lấy mã nguồn
-git clone [Điền: địa chỉ repo]
+git clone <địa-chỉ-repo> ChatBot
 cd ChatBot
 
-# 2. Tạo môi trường và cài phụ thuộc
-[Điền: lệnh]
+# 2. Tạo môi trường Python và cài phụ thuộc
+cd backend
+python -m venv .venv
+.venv\Scripts\activate        # Windows PowerShell
+# source .venv/bin/activate    # Linux / macOS
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+cd ..
 
 # 3. Tạo file cấu hình từ mẫu
-[Điền: lệnh copy file mẫu, ví dụ .env.example]
+# Windows PowerShell:
+Copy-Item .env.example .env
+# Linux / macOS:
+# cp .env.example .env
 
-# 4. Điền khóa API và địa chỉ dịch vụ vào file cấu hình
+# 4. Điền khóa API và địa chỉ dịch vụ trong .env
+#    Sinh APP_SECRET (bắt buộc khi chạy thật):
+python -c "import secrets; print(secrets.token_urlsafe(48))"
+
+# 5. Khởi động ChromaDB + Neo4j
+docker compose up -d chroma neo4j
+docker compose ps
 ```
 
 **Kiểm tra nhanh sau khi cài:**
 
-- ChromaDB trả lời tại `CHROMA_URL`.
-- Neo4j nhận kết nối tại `NEO4J_URI`.
-- Groq và Qwen trả lời một yêu cầu đơn giản với khóa đã cấu hình.
-- Tải được mô hình embedding từ Hugging Face.
+- `docker compose ps` báo `chroma` và `neo4j` ở trạng thái `healthy`.
+- Neo4j mở được tại `http://localhost:7474` bằng tài khoản trong `.env`.
+- Groq và Qwen/OpenRouter trả lời một yêu cầu đơn giản với khóa đã cấu hình.
+- Lần hỏi đầu tiên sẽ tải mô hình embedding (vài trăm MB) và có thể chậm hơn các lần sau.
 
 ---
 
@@ -343,38 +364,62 @@ Chạy thủ công theo đợt, do quản trị viên dữ liệu thực hiện.
 
 ### 9.1. Chuẩn bị
 
-1. Đặt tài liệu nguồn vào thư mục [Điền: thư mục đầu vào].
-2. Kiểm tra các dịch vụ đang chạy (ChromaDB, Neo4j).
-3. Kiểm tra khóa API còn hạn mức.
+1. Đặt tài liệu nguồn trong `data/` (ví dụ `data/Chương trình đào tạo/`, `data/Sổ tay sinh viên/`). Pipeline quét đệ quy và tự bỏ qua các thư mục `processed/`.
+2. Kiểm tra ChromaDB và Neo4j đang chạy: `docker compose ps`.
+3. Kiểm tra khóa API còn hạn mức trong `.env`.
 
 ### 9.2. Chạy
 
 ```bash
-# [Điền: lệnh chạy script trong scripts/]
+# Build image backend (ingest dùng chung image chatbot-tlu:latest)
+docker compose build backend
+
+# Nạp toàn bộ data/ trong container; tự khởi động Chroma/Neo4j nếu chưa chạy
+docker compose --profile ingest run --rm ingest
 ```
+
+Lệnh trên mount `./data` vào `/app/data` để ghi được log vào `*/processed/extract_log.jsonl`.
 
 ### 9.3. Kết quả
 
-Sau khi chạy xong, kiểm tra báo cáo:
-
-- Số tài liệu đã nhận và số file bị lỗi.
-- Số đoạn văn bản và số khối từ bảng.
-- Số thực thể và quan hệ đã ghi vào Neo4j.
-- Số lần gộp trùng lặp.
+Theo dõi log của lệnh ingest; cuối mỗi tài liệu có dòng tổng kết số đoạn, số thực thể, số quan hệ và số lần gộp trùng. Log resume nằm tại `data/<thư-mục>/processed/extract_log.jsonl`.
 
 ### 9.4. Chạy lại
 
-Chạy lại trên cùng tài liệu không tạo bản trùng trong Neo4j nhờ MERGE. Với ChromaDB, [Điền: cách tránh trùng đoạn khi chạy lại].
+Chạy lại trên cùng tài liệu không tạo bản trùng:
+
+- ChromaDB dùng ID ổn định `sha256(tên file + nội dung đoạn)` và `upsert`.
+- Neo4j dùng `MERGE` cho thực thể và quan hệ.
+
+Tài liệu đã bị xóa khỏi `data/` **không** tự động bị xóa khỏi hai kho; cần xóa thủ công nếu muốn loại bỏ hoàn toàn.
 
 ---
 
 ## 10. Chạy ứng dụng
 
 ```bash
-# [Điền: lệnh chạy Flask, cổng, địa chỉ truy cập]
+# Chạy toàn bộ stack (backend + frontend + Chroma + Neo4j)
+docker compose up -d --build
+
+# Xem trạng thái và log
+docker compose ps
+docker compose logs -f backend
 ```
 
-Mở trình duyệt tại [Điền: địa chỉ], đăng nhập bằng tài khoản sinh viên, và gửi câu hỏi thử.
+- Giao diện: `http://localhost:8080` (đổi bằng `FRONTEND_PORT`).
+- API trực tiếp: `http://localhost:8010/health` (đổi bằng `APP_PORT`); nginx chuyển `/api/*` trên cổng 8080 sang backend và bỏ tiền tố `/api`.
+- Đăng nhập demo: `sinhvien01 / demo-password` (sinh viên) hoặc `admin01 / demo-password` (quản trị).
+- Lần hỏi đầu tiên có thể chậm do tải mô hình embedding; timeout đã đặt 300 giây.
+
+Chạy backend ngoài Docker để phát triển API (UI trong container không gọi được backend trên host):
+
+```powershell
+cd backend
+$env:PYTHONIOENCODING="utf-8"
+.venv\Scripts\python.exe -m src.main
+```
+
+Dừng stack nhưng giữ dữ liệu: `docker compose down`. **Không dùng `docker compose down -v`** trừ khi muốn xóa cả kho tri thức và cache mô hình.
 
 ---
 
@@ -387,15 +432,23 @@ Mở trình duyệt tại [Điền: địa chỉ], đăng nhập bằng tài kho
 | **E2E** | Luồng hỏi đáp đầy đủ theo tiêu chí AC trong QT-01 và QT-02 | Cần cả hai kho có dữ liệu |
 
 ```bash
-# Unit
-[Điền: lệnh]
+# Chạy từ thư mục backend, dùng đúng venv của dự án
+cd backend
 
-# Integration
-[Điền: lệnh]
+# Unit: không cần dịch vụ ngoài
+.venv\Scripts\python.exe -m pytest tests/unit -q
 
-# E2E
-[Điền: lệnh]
+# Integration: cần Chroma + Neo4j đang chạy và .env hợp lệ
+.venv\Scripts\python.exe -m pytest tests/integration -q
+
+# Lint
+.venv\Scripts\python.exe -m ruff check src tests scripts
+
+# E2E: chưa có bộ tự động; chạy stack rồi kiểm tra thủ công qua UI
+# (đăng nhập, hỏi đáp, xem nguồn, lịch sử, đổi mật khẩu)
 ```
+
+Trên Linux/macOS thay `.venv\Scripts\python.exe` bằng `.venv/bin/python`.
 
 **Tiêu chí nghiệm thu** nằm trong mục 12 của hai file đặc tả:
 
@@ -406,7 +459,7 @@ Mở trình duyệt tại [Điền: địa chỉ], đăng nhập bằng tài kho
 
 ## 12. Quy ước phát triển
 
-- Đọc `AGENTS.md` trước khi sửa mã. File này mô tả quy ước module, lớp, và lệnh kiểm thử.
+- Đọc `AGENT.md` trước khi sửa mã. File này mô tả quy ước module, lớp, và lệnh kiểm thử.
 - Đặt đặc tả quy trình mới trong `docs/2-ky-thuat/flows/`, đặt tên theo `QT-<nn>-<ten-ngan>.md`.
 - Khi thay đổi đặc tả, tăng số phiên bản và thêm dòng vào mục "Lịch sử thay đổi". Không ghi đè bản cũ.
 - Mọi thay đổi về kiến trúc cần cập nhật `kien-truc-chatbot-tlu.md`.
@@ -430,11 +483,15 @@ Mở trình duyệt tại [Điền: địa chỉ], đăng nhập bằng tài kho
 
 ## 14. Giới hạn đã biết
 
+- Backend chạy **một gunicorn worker** vì phiên đăng nhập, người dùng và lịch sử hội thoại đang lưu trong RAM. Khởi động lại backend sẽ mất các dữ liệu này; không scale ngang được cho đến khi chuyển sang Redis/DB dùng chung.
+- Toàn bộ kho tri thức và cache mô hình nằm trong Docker volume. `docker compose down -v` sẽ xóa chúng và phải nạp lại từ đầu.
+- Lần hỏi đầu tiên tải mô hình embedding; nếu mạng chậm có thể vượt timeout hoặc cần nạp sẵn cache.
 - `chunk_size` có thể là token. Nếu vậy sẽ vượt giới hạn 256 token của mô hình embedding, làm đoạn bị cắt khi nhúng. Cần xác định trước khi nạp dữ liệu thật (Q-12 trong QT-02).
 - Chưa có số liệu về độ trễ và chi phí API.
 - Chất lượng router và câu trả lời chưa được đo bằng bộ câu hỏi chuẩn (P-05 trong kế hoạch).
 - Mô hình ngôn ngữ dựa trên tài liệu nguồn. Thông tin cũ trong tài liệu sẽ được trả lời như cũ cho đến khi nạp lại.
-- Chưa có kênh chuyển câu hỏi cho người thật.
+- Nạp lại không tự xóa các đoạn/thực thể của tài liệu đã bị gỡ khỏi `data/`.
+- Chưa có bộ test E2E tự động và chưa có kênh chuyển câu hỏi cho người thật.
 
 ---
 
