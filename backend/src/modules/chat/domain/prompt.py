@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from src.modules.chat.domain.retrieval_result import RetrievedContext
 
-ROLE_PROMPT = "Bạn là trợ lý tra cứu thông tin chính thức của Trường Đại học Thủy Lợi."
+ROLE_PROMPT = (
+    "Bạn là trợ lý tra cứu thông tin chính thức của Trường Đại học Thủy Lợi."
+)
 
 RULES = [
-    "Chỉ dùng thông tin trong phần \"Tài liệu\" được cung cấp.",
+    'Chỉ dùng thông tin trong phần "Tài liệu" được cung cấp.',
     "Không bịa thông tin, không dùng kiến thức chung ngoài tài liệu.",
     "Trả lời bằng tiếng Việt, rõ ràng, ngắn gọn.",
     "Nếu tài liệu không đủ để trả lời, nói rõ và không suy đoán.",
@@ -16,6 +18,9 @@ NO_INFO_MESSAGE = (
     "Hiện chatbot chưa có thông tin về nội dung này. "
     "Bạn vui lòng liên hệ đơn vị hỗ trợ của nhà trường để được giải đáp."
 )
+
+# Dịch vụ lỗi: trả lời tạm thời, không lộ thuật ngữ kỹ thuật (Q-04, AGENTS mục 7.2)
+SERVICE_BUSY_MESSAGE = "Hệ thống đang bận, bạn thử lại sau"
 
 
 def format_history(history: list[dict]) -> str:
@@ -31,7 +36,8 @@ def format_history(history: list[dict]) -> str:
 
 def format_context(context: RetrievedContext) -> str:
     if context.mode == "None":
-        return "(không truy xuất)"
+        # QT-01: câu chào hỏi vẫn được soạn trả lời, chỉ là không kèm tài liệu
+        return "(không truy xuất — câu hỏi giao tiếp thông thường)"
     parts: list[str] = []
     for i, chunk in enumerate(context.chunks, start=1):
         source = chunk.citation() or "tài liệu"

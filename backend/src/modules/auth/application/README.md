@@ -47,10 +47,10 @@ File hiện có:
 execute(username, password)
    │
    ├─ 1. Kiểm tra phòng hờ: rỗng? → UnauthorizedError
-   ├─ 2. checker.check(username, password)  → False? UnauthorizedError
-   ├─ 3. checker.find_user(username)        → None? UnauthorizedError
-   ├─ 4. token_issuer.issue(user.id)        → access token
-   └─ 5. store.create(user.id)              → refresh token (phiên)
+   ├─ 2. checker.check(username, password)  → None? UnauthorizedError
+   ├─ 3. token_issuer.issue(user.id)        → access token
+   ├─ 4. store.create(user.id)              → refresh token (phiên)
+   └─ 5. event_bus.publish(UserLoggedIn)    → audit log (UserLoggedIn(user_id, role))
 ```
 
 ## Luồng trong `RefreshTokenUseCase.execute(refresh_token)`
@@ -85,6 +85,9 @@ execute(raw)
 | `TokenIssuerPort` | Cấp access token (application không biết cách ký) | Login, Refresh |
 | `RefreshTokenStore` | Tạo/tìm/thu hồi phiên refresh | Login, Refresh, Logout |
 | `UserRepository` (module user) | Tìm user theo id — kiểm tra user còn tồn tại, lấy role | Refresh |
+
+Ngoài port, `LoginUseCase` nhận `EventBus` (shared/events) để bắn `UserLoggedIn` — bus là
+hạ tầng sự kiện dùng chung, không phải chỗ lưu dữ liệu; handler audit nằm ở `platform/logging/audit.py`.
 
 **Tại sao mọi lỗi đăng nhập đều cùng một thông điệp "Sai tài khoản hoặc mật khẩu"?**
 Để không tiết lộ: người dùng sai ở bước nào (sai username? sai password?). Hacker không dò được từng phần.

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import threading
+
 from src.modules.user.domain.user import User
 from src.platform.security.auth import hash_password, verify_password
+from src.shared.common.errors import NotFoundError
 
 
 class InMemoryUserRepository:
@@ -24,7 +27,12 @@ class InMemoryUserRepository:
         self._users[user.id] = user
         return user
 
+    def list_all(self) -> list[User]:
+        return list(self._users.values())
+
     def set_password(self, username: str, password: str) -> None:
+        if self.find_by_username(username) is None:
+            raise NotFoundError("Không tìm thấy người dùng")
         self._credentials[username] = hash_password(password)
 
     def check_password(self, username: str, password: str) -> bool:
@@ -35,14 +43,26 @@ class InMemoryUserRepository:
 
 
 _USER_REPOSITORY: InMemoryUserRepository | None = None
+_USER_REPOSITORY_LOCK = threading.Lock()
 
 
 def get_user_repository() -> InMemoryUserRepository:
+    """Singleton an toàn luồng — seed xong mới gán (2 request cold start không seed đôi)."""
     global _USER_REPOSITORY
     if _USER_REPOSITORY is None:
-        _USER_REPOSITORY = InMemoryUserRepository()
-        _seed_demo_users(_USER_REPOSITORY)
+        with _USER_REPOSITORY_LOCK:
+            if _USER_REPOSITORY is None:
+                repo = InMemoryUserRepository()
+                _seed_demo_users(repo)
+                _USER_REPOSITORY = repo
     return _USER_REPOSITORY
+
+
+def reset_user_repository() -> None:
+    """Xóa singleton để lần gọi sau seed lại — dùng cho test."""
+    global _USER_REPOSITORY
+    with _USER_REPOSITORY_LOCK:
+        _USER_REPOSITORY = None
 
 
 def _seed_demo_users(repo: InMemoryUserRepository) -> None:

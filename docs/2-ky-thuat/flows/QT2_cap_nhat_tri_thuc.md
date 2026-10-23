@@ -3,7 +3,7 @@
 | Mục           | Giá trị                               |
 | ------------- | ------------------------------------- |
 | Dự án         | Chatbot TLU (Trường Đại học Thủy Lợi) |
-| Phiên bản     | 1.1 - 2026-10-13                      |
+| Phiên bản     | 1.2 - 2026-10-19                      |
 | Người yêu cầu | Chưa rõ (xem Q-01)                    |
 | Ưu tiên       | Chưa rõ (xem Q-02)                    |
 | Loại          | Mới                                   |
@@ -128,7 +128,7 @@ Tài liệu nguồn không mô tả thông báo realtime hoặc email.
 | ----- | --------------------------------------------------------------------------------------------------------------------- | -------------------- |
 | GD-01 | Có vai trò quản trị viên dữ liệu và chỉ vai trò này được chạy quy trình nạp. Tên khóa vai trò chưa có trong mã nguồn. | Người yêu cầu (Q-07) |
 | GD-02 | Quy trình do quản trị viên khởi động thủ công. Lịch chạy tự động chưa được nêu.                                       | Người yêu cầu        |
-| GD-03 | Bước xác định các loại thực thể dùng Llama-3.3-70B trên 500 câu hỏi và chỉ chạy một lần, không chạy lại mỗi lần nạp.  | Đội kỹ thuật         |
+| GD-03 | Bước xác định các loại thực thể dùng Qwen3.8-27B trên 500 câu hỏi và chỉ chạy một lần, không chạy lại mỗi lần nạp. | Đội kỹ thuật         |
 | GD-04 | Sau khi nạp có báo cáo cho quản trị viên dữ liệu. Yêu cầu gốc không nêu.                                              | Người yêu cầu (Q-10) |
 | Q-01  | Ai yêu cầu đặc tả này và ai duyệt?                                                                                    | Người yêu cầu        |
 | Q-02  | Mức ưu tiên?                                                                                                          | Người yêu cầu        |
@@ -148,7 +148,7 @@ Tài liệu nguồn không mô tả thông báo realtime hoặc email.
 - Không có mã nguồn trong phiên làm việc, nên chưa có `path:line` nào được xác minh.
 - Embedding: bkai-foundation-models/vietnamese-bi-encoder qua Hugging Face, 768 chiều, giới hạn 256 token.
 - Chia đoạn văn bản: Recursive Character Chunking, chunk_size = 800, overlap = 120. Bảng: Group By Chunking theo sheet.
-- Xác định loại thực thể: Llama-3.3-70B qua Groq (một lần). Trích thực thể và quan hệ: Qwen3-235B-A22B qua API.
+- Xác định loại thực thể: Qwen3.8-27B qua Groq (một lần). Trích thực thể và quan hệ: Qwen3-235B-A22B qua API.
 - Khử trùng lặp hai giai đoạn: khớp tên chính xác, rồi khớp ngữ nghĩa với cosine ≥ 0.92.
 - Lưu: ChromaDB cho đoạn văn bản, Neo4j cho đồ thị bằng Cypher MERGE (cập nhật gia tăng, khác GraphRAG Parquet tĩnh).
 - Lưu ý Q-12: nếu 800 là token thì vượt giới hạn 256 token của mô hình embedding, đoạn sẽ bị cắt khi nhúng.
@@ -159,3 +159,4 @@ Tài liệu nguồn không mô tả thông báo realtime hoặc email.
 | --------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1.0       | 2026-10-13 | Tạo mới từ tài liệu luồng chatbot TLU                                                                                                                  |
 | 1.1       | 2026-10-13 | Bỏ thuật ngữ kỹ thuật ở mục 1–4; AC phân quyền không còn điều kiện; thêm thông báo và audit cho thao tác ghi; bỏ ví dụ tự đặt; thêm GD-01, GD-04, Q-12 |
+| 1.2       | 2026-10-19 | Đổi model Groq ở GD-03 và ghi chú dev sang Qwen3.8-27B do Groq đã gỡ Llama-3.3-70B |

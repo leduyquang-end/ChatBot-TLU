@@ -139,10 +139,13 @@ services:
     environment:
       CHROMA_URL: http://chroma:8000
       NEO4J_URI: bolt://neo4j:7687
-    command: ["python", "scripts/ingest_tlu.py", "data/source"]
+    # Nạp cả cây data/ (tài liệu nằm trong các thư mục con); pipeline tự bỏ qua processed/
+    command: ["python", "scripts/ingest_tlu.py", "data"]
+    # Chạy root trong container để ghi được extract_log.jsonl vào thư mục bind-mount
+    user: "0:0"
     volumes:
-      # Thư mục chứa tài liệu nguồn, chỉ đọc
-      - ./data/source:/app/data/source:ro
+      # Cần quyền ghi cho data/*/processed/extract_log.jsonl (resume khi nạp lại)
+      - ./data:/app/data
       - hf_cache:/home/app/.cache/huggingface
     depends_on:
       chroma:

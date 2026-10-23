@@ -3,7 +3,7 @@
 | Mục | Giá trị |
 |-----|---------|
 | Dự án | ChatBot (Trường Đại học Thủy Lợi) |
-| Phiên bản | 1.0 - 2026-10-13 |
+| Phiên bản | 1.1 - 2026-10-19 |
 | Trạng thái | Nháp |
 | Liên quan | `Plan-chatbot-tlu.md`, `./flows/QT-01-hoi-dap-sinh-vien.md`, `./flows/QT-02-cap-nhat-tri-thuc-chatbot.md` |
 
@@ -42,7 +42,7 @@ flowchart LR
   T --> CDB
   T --> NDB
 
-  R -.-> LLM1[Llama-3.3-70B qua Groq]
+  R -.-> LLM1[Qwen3.8-27B qua Groq]
   S4 -.-> LLM2[Qwen3-235B-A22B qua API]
   G -.-> LLM2
   S3 -.-> EMB[Embedding qua Hugging Face]
@@ -96,7 +96,7 @@ Quy tắc giao tiếp: luồng hỏi đáp chỉ đọc kho qua một cổng tru
 | Mã | Quyết định | Lý do | Nguồn |
 |----|-----------|-------|-------|
 | ADR-01 | Dùng hai kho, một cho đoạn văn bản và một cho đồ thị | Đoạn văn bản trả lời định nghĩa và quy định chi tiết. Đồ thị trả lời quan hệ và điều kiện tiên quyết | Đã chốt |
-| ADR-02 | Router dùng Llama-3.3-70B qua Groq | Router chạy trước mọi bước, nên độ trễ thấp là quan trọng | Đã chốt |
+| ADR-02 | Router dùng Qwen3.8-27B qua Groq (thay Llama-3.3-70B) | Groq đã gỡ model llama-3.3-70b-versatile (404 xác minh 2026-10-19); router chạy trước mọi bước nên độ trễ thấp vẫn là quan trọng | Đã chốt |
 | ADR-03 | Sinh câu trả lời dùng Qwen3-235B-A22B | Tài liệu nguồn dẫn benchmark tiếng Việt trong Qwen3 Technical Report, Bảng 33. Cần kiểm chứng lại trước khi cam kết | Đã chốt (cần kiểm chứng) |
 | ADR-04 | Embedding dùng vietnamese-bi-encoder, giới hạn 256 token | Mô hình được chọn cho tiếng Việt | Đã chốt |
 | ADR-05 | Truy xuất vector dùng MMR, 10 ứng viên, lấy 5 | Cân bằng giữa liên quan và đa dạng của các đoạn | Đã chốt |
@@ -111,9 +111,9 @@ Quy tắc giao tiếp: luồng hỏi đáp chỉ đọc kho qua một cổng tru
 
 | Dịch vụ | Dùng cho | Khi lỗi |
 |---------|----------|---------|
-| Groq (Llama-3.3-70B) | Router, xác định loại thực thể, trích thực thể từ câu hỏi | Chưa rõ (Q-04 trong QT-01) |
-| Qwen3-235B-A22B (API) | Trích thực thể và quan hệ khi nạp, sinh câu trả lời khi hỏi đáp | Chưa rõ (Q-04 trong QT-01) |
-| Hugging Face (embedding) | Nhúng đoạn văn bản và câu hỏi | Chưa rõ |
+| Groq (Qwen3.8-27B) | Router, xác định loại thực thể, trích thực thể từ câu hỏi | Router lỗi → dùng Vector (ADR-08), người dùng không thấy lỗi |
+| Qwen3-235B-A22B (API) | Trích thực thể và quan hệ khi nạp, sinh câu trả lời khi hỏi đáp | Trả thông báo tạm thời, mã 503 (đã chốt Q-04, 2026-10-19) |
+| Hugging Face (embedding) | Nhúng đoạn văn bản và câu hỏi | Trả thông báo tạm thời, mã 503 (2026-10-19) |
 
 Quy tắc chung đề xuất: thử lại có giới hạn, thời gian chờ cố định, khóa API chỉ đọc từ biến môi trường, không ghi vào log.
 
@@ -148,3 +148,4 @@ Chưa rõ:
 | Phiên bản | Ngày | Thay đổi |
 |-----------|------|----------|
 | 1.0 | 2026-10-13 | Tạo mới từ luồng chatbot TLU và cấu trúc dự án |
+| 1.1 | 2026-10-19 | ADR-02: chuyển model Groq sang Qwen3.8-27B (Groq gỡ Llama-3.3-70B); ghi rõ hành vi lỗi dịch vụ (chốt Q-04) |

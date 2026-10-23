@@ -8,9 +8,9 @@ Mỗi file cài 1 port từ `application/ports/`. Application **không** import 
 
 Cài `CredentialChecker`:
 
-- `check()` → `repository.check_password(username, password)`
-- `find_user()` → `repository.find_by_username(username)`
-- Repository mặc định: `get_user_repository()` (in-memory, seed user demo)
+- Nhận repository qua constructor: `RepositoryCredentialChecker(get_user_repository())`
+- `check()` → tìm user theo username; không có hoặc sai mật khẩu → `None`, đúng → user (`id` + `role` theo Protocol `UserRecord`)
+- Không import module user — chỉ cần object có `find_by_username()` + `check_password()` (composition root ở `api/routes.py` bơm vào)
 
 ### `hmac_token_issuer.py`
 
@@ -37,7 +37,7 @@ Cài `RefreshTokenStore` — lưu phiên refresh trong RAM:
 
 ```
 LoginUseCase(
-    checker=RepositoryCredentialChecker(),   # cài CredentialChecker
+    checker=RepositoryCredentialChecker(get_user_repository()),  # cài CredentialChecker (bơm repo vào)
     token_issuer=HmacTokenIssuer(),          # cài TokenIssuerPort
     store=get_refresh_token_store(),         # cài RefreshTokenStore (singleton)
 )
@@ -45,7 +45,7 @@ LoginUseCase(
 RefreshTokenUseCase(
     store=get_refresh_token_store(),
     token_issuer=HmacTokenIssuer(),
-    users=get_user_repository(),             # cài UserRepository (module user)
+    users=get_user_repository(),             # thỏa UserLookup (chỉ dùng find_by_id → id/role)
 )
 
 LogoutUseCase(store=get_refresh_token_store())

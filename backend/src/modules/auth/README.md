@@ -17,6 +17,7 @@ auth/
 │   ├── logout.py                        ←  (thu hồi phiên)
 │   └── ports/
 │       ├── credential_checker.py        ←  (hợp đồng) tôi cần ai kiểm tra mật khẩu
+│       ├── user_lookup.py               ←  (hợp đồng) tôi cần ai tra user
 │       ├── token_issuer.py              ←  (hợp đồng) tôi cần ai cấp token
 │       └── refresh_token_store.py       ←  (hợp đồng) tôi cần ai lưu phiên
 ├── domain/refresh_token.py              ←  Phiên refresh + luật "hết hạn"
@@ -43,10 +44,10 @@ POST /auth/login  {username: "sinhvien01", password: "demo-password"}
         │
         ▼
 [LoginUseCase.execute]
-   Bước 1: checker.check(username, password)   → Sai? UnauthorizedError (401)
-   Bước 2: checker.find_user(username)         → Không thấy? UnauthorizedError (401)
-   Bước 3: token_issuer.issue(user.id)         → access token (24h)
-   Bước 4: store.create(user.id)               → refresh token (phiên 30 ngày)
+   Bước 1: checker.check(username, password)   → Sai/Không thấy user? UnauthorizedError (401)
+   Bước 2: token_issuer.issue(user.id)         → access token (24h)
+   Bước 3: store.create(user.id)               → refresh token (phiên 30 ngày)
+   Bước 4: bus.publish(UserLoggedIn)           → audit log (user_id, role)
         │
         ▼
 Trả về: 200 {"token": "...", "refresh_token": "...", "user_id": "u-001", "role": "student"}

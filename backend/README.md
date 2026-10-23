@@ -12,7 +12,7 @@ Hãy tưởng tượng backend như **quầy tiếp thị của một trường 
 ```bash
 cd backend
 pip install -r requirements.txt          # cài thư viện cần thiết
-python -c "from src.main import create_app; create_app().run(port=8010)"
+python -m src.main                       # chạy server theo APP_PORT (mặc định 8000)
 ```
 
 Chạy kiểm thử (test — kiểm tra code có hoạt động đúng không):

@@ -3,7 +3,7 @@
 | Mục | Giá trị |
 |-----|---------|
 | Dự án | Chatbot TLU (Trường Đại học Thủy Lợi) |
-| Phiên bản | 1.1 - 2026-10-13 |
+| Phiên bản | 1.2 - 2026-10-19 |
 | Người yêu cầu | Chưa rõ (xem Q-01) |
 | Ưu tiên | Chưa rõ (xem Q-02) |
 | Loại | Mới |
@@ -60,8 +60,8 @@ flowchart TD
 | E1 | Bước chọn cách tìm trả về kết quả sai định dạng hoặc không thuộc các cách đã định | Dùng cách tìm theo nội dung tài liệu | Không báo lỗi, trả lời bình thường |
 | E2 | Tài liệu không có thông tin phù hợp với câu hỏi | Không tự soạn câu trả lời từ kiến thức chung | "Hiện chatbot chưa có thông tin về nội dung này. Bạn vui lòng liên hệ [đơn vị, Q-03]." |
 | E3 | Câu hỏi để trống hoặc chỉ có ký tự đặc biệt | Không tìm kiếm | Yêu cầu nhập lại câu hỏi (cách hiển thị chưa rõ, GD-02) |
-| E4 | Dịch vụ xử lý ngôn ngữ không phản hồi | Chưa rõ (Q-04) | Chưa rõ (Q-04) |
-| E5 | Kho tài liệu không truy cập được | Chưa rõ (Q-04) | Chưa rõ (Q-04) |
+| E4 | Dịch vụ xử lý ngôn ngữ không phản hồi | Trả thông báo tạm thời, không cố sinh câu trả lời | Mã 503, "Hệ thống đang bận, bạn thử lại sau" (đã chốt Q-04) |
+| E5 | Kho tài liệu không truy cập được | Ghi log lỗi, trả thông báo tạm thời | Mã 503, "Hệ thống đang bận, bạn thử lại sau" (đã chốt Q-04) |
 | E6 | Câu hỏi không thuộc phạm vi trường (ví dụ chính trị) | Chưa rõ (Q-05) | Chưa rõ (Q-05) |
 | E7 | Người chưa đăng nhập hoặc không phải sinh viên gửi câu hỏi | Từ chối, không trả lời | Yêu cầu đăng nhập bằng tài khoản sinh viên (thông báo chưa rõ, Q-09) |
 
@@ -116,7 +116,7 @@ Tài liệu nguồn không mô tả thông báo realtime hoặc email.
 | Q-01 | Ai yêu cầu đặc tả này và ai duyệt? | Người yêu cầu |
 | Q-02 | Mức ưu tiên của quy trình này là gì? | Người yêu cầu |
 | Q-03 | Gợi ý liên hệ nên ghi đơn vị nào (phòng công tác sinh viên, khoa, email, số điện thoại)? | Người yêu cầu |
-| Q-04 | Khi dịch vụ xử lý ngôn ngữ hoặc kho tài liệu bị lỗi, sinh viên thấy gì và hệ thống làm gì? | Đội kỹ thuật |
+| Q-04 | ~~Khi dịch vụ xử lý ngôn ngữ hoặc kho tài liệu bị lỗi, sinh viên thấy gì và hệ thống làm gì?~~ Đã chốt 2026-10-19: mã 503, "Hệ thống đang bận, bạn thử lại sau" (xem E4, E5) | Đội kỹ thuật |
 | Q-05 | Câu hỏi ngoài phạm vi trường (không liên quan đến giáo dục) được xử lý thế nào? | Người yêu cầu |
 | Q-06 | Có cần ghi nhật ký (audit) cho từng câu hỏi và câu trả lời không? | Người yêu cầu |
 | Q-07 | Lịch sử cuộc trò chuyện lưu ở đâu, trong bao lâu, và sinh viên có xóa được không? | Đội kỹ thuật |
@@ -125,9 +125,9 @@ Tài liệu nguồn không mô tả thông báo realtime hoặc email.
 
 ## 15. Ghi chú kỹ thuật cho dev
 - Không có mã nguồn trong phiên làm việc, nên chưa có `path:line` nào được xác minh.
-- Bước chọn cách tìm dùng Llama-3.3-70B qua Groq, trả về JSON có 4 nhãn. Nếu sai định dạng, dùng nhãn Vector.
+- Bước chọn cách tìm dùng Qwen3.8-27B qua Groq, trả về JSON có 4 nhãn. Nếu sai định dạng, dùng nhãn Vector.
 - Tìm theo nội dung: tìm vector, lấy 10 ứng viên (fetch_k = 10), chọn 5 đoạn bằng MMR (top_k = 5).
-- Tìm theo quan hệ: trích thực thể bằng Llama-3.3-70B, tìm node theo từ khóa và theo ngữ nghĩa, điểm = α·semantic + (1−α)·keyword, α ∈ [0.6, 0.8], rồi lấy cạnh vào và ra của node được chọn.
+- Tìm theo quan hệ: trích thực thể bằng Qwen3.8-27B qua Groq, tìm node theo từ khóa và theo ngữ nghĩa, điểm = α·semantic + (1−α)·keyword, α ∈ [0.6, 0.8], rồi lấy cạnh vào và ra của node được chọn.
 - Soạn câu trả lời: Qwen3-235B-A22B qua API.
 - Thành phần: Flask (giao diện), ChromaDB (vector), Neo4j (đồ thị).
 
@@ -136,3 +136,4 @@ Tài liệu nguồn không mô tả thông báo realtime hoặc email.
 |-----------|------|----------|
 | 1.0 | 2026-10-13 | Tạo mới từ tài liệu luồng chatbot TLU |
 | 1.1 | 2026-10-13 | Bỏ thuật ngữ kỹ thuật ở mục 1–4; AC phân quyền không còn điều kiện; thêm thông báo và audit cho thao tác ghi; bỏ ví dụ tự đặt; thêm E7 và GD-01 |
+| 1.2 | 2026-10-19 | Đổi model Groq (router, trích thực thể) sang Qwen3.8-27B do Groq đã gỡ Llama-3.3-70B; chốt Q-04 (E4, E5): mã 503, "Hệ thống đang bận, bạn thử lại sau" |

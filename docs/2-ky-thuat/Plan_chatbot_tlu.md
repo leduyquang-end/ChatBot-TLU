@@ -3,7 +3,7 @@
 | Mục | Giá trị |
 |-----|---------|
 | Dự án | ChatBot (Trường Đại học Thủy Lợi) |
-| Phiên bản | 1.0 - 2026-10-13 |
+| Phiên bản | 1.1 - 2026-10-19 |
 | Trạng thái | Nháp, chờ xác nhận các câu hỏi mở ở mục 10 |
 | Đặc tả liên quan | `docs/2-ky-thuat/flows/QT1_hoi_dap_sinh_vien.md`, `docs/2-ky-thuat/flows/QT2_cap_nhat_tri_thuc.md` |
 
@@ -120,7 +120,7 @@ Thứ tự là Giai đoạn 0 → 1 → 2 → 3 → 4 → 5. Giai đoạn 2 và 
 
 **2.4 Nhánh đồ thị (A4.2)**
 
-- Xác định loại thực thể: chạy Llama-3.3-70B một lần trên 500 câu hỏi để lấy danh từ hay gặp. Danh sách ban đầu: môn học, ngành học, học phí, học bổng, học kỳ, bộ môn, đối tượng, thủ tục.
+- Xác định loại thực thể: chạy Qwen3.8-27B một lần trên 500 câu hỏi để lấy danh từ hay gặp. Danh sách ban đầu: môn học, ngành học, học phí, học bổng, học kỳ, bộ môn, đối tượng, thủ tục.
 - Trích thực thể và quan hệ bằng Qwen3-235B-A22B, với prompt tiếng Việt gồm vai trò, danh sách loại, quy tắc, định dạng đầu ra và ví dụ.
 - Khử trùng lặp hai giai đoạn: theo tên chính xác, rồi theo cosine ≥ 0.92. Giữ thực thể có mô tả dài hơn. Chuyển quan hệ về thực thể được giữ. Bỏ cặp quan hệ trùng.
 - Nạp vào Neo4j bằng Cypher MERGE. Chạy lại không tạo bản ghi trùng.
@@ -139,7 +139,7 @@ Thứ tự là Giai đoạn 0 → 1 → 2 → 3 → 4 → 5. Giai đoạn 2 và 
 
 **3.1 Bộ định tuyến (B2)**
 
-- Llama-3.3-70B qua Groq, prompt few-shot tiếng Việt, trả về JSON với một trong bốn nhãn: Vector, Đồ thị, Kết hợp, Không truy xuất.
+- Qwen3.8-27B qua Groq, prompt few-shot tiếng Việt, trả về JSON với một trong bốn nhãn: Vector, Đồ thị, Kết hợp, Không truy xuất.
 - Đầu ra sai định dạng hoặc nhãn lạ: dùng Vector (E1 trong QT-01, BR-03).
 - Test với bộ câu hỏi mẫu, gồm cả câu chào hỏi và câu ngoài phạm vi.
 
@@ -260,3 +260,4 @@ Dự án được coi là hoàn thành khi:
 | Phiên bản | Ngày | Thay đổi |
 |-----------|------|----------|
 | 1.0 | 2026-10-13 | Tạo mới từ đặc tả QT-01 và QT-02 (v1.1) và cấu trúc dự án |
+| 1.1 | 2026-10-19 | Đổi model Groq của router và bước xác định loại thực thể sang Qwen3.8-27B (Groq đã gỡ Llama-3.3-70B) |

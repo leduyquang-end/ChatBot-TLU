@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from flask import Flask, jsonify
+from werkzeug.exceptions import HTTPException
 
 # Đọc .env trước khi load settings (ưu tiên .env ở repo root, fallback backend/)
 try:
@@ -20,16 +21,19 @@ except ImportError:
 from src.modules.auth.api.routes import bp as auth_bp
 from src.modules.chat.api.routes import bp as chat_bp
 from src.modules.user.api.routes import bp as user_bp
-from src.platform.logging.setup import setup_logging
-from src.shared.common.errors import AppError
+from src.platform.logging.audit import register_audit_handlers
+from src.platform.logging.setup import get_logger, log_event, setup_logging
+from src.shared.common.errors import AppError, InternalError
 from src.shared.config.settings import get_settings
+from src.shared.events import get_event_bus
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def create_app() -> Flask:
     settings = get_settings()
     setup_logging(settings.log_level)
+    register_audit_handlers(get_event_bus())
 
     app = Flask(__name__)
     app.register_blueprint(auth_bp)
@@ -47,15 +51,25 @@ def create_app() -> Flask:
             exc.http_status,
         )
 
-    @app.errorhandler(Exception)
-    def handle_unexpected(exc: Exception):
-        logger.error("event=chat.internal.error type=%s", type(exc).__name__)
+    @app.errorhandler(HTTPException)
+    def handle_http_error(exc: HTTPException):
+        # Giữ nguyên 404/405... thay vì để handler Exception bên dưới biến thành 500.
+        code = (exc.name or "HTTP_ERROR").upper().replace(" ", "_")
         return (
-            jsonify({"error": {"code": "INTERNAL_ERROR", "message": "Hệ thống đang gặp sự cố"}}),
-            500,
+            jsonify({"error": {"code": code, "message": exc.description or ""}}),
+            exc.code or 500,
         )
 
-    logger.info("event=app.started port=%s", settings.app_port)
+    @app.errorhandler(Exception)
+    def handle_unexpected(exc: Exception):
+        log_event(logger, logging.ERROR, "app.internal.error", type=type(exc).__name__)
+        error = InternalError("Hệ thống đang gặp sự cố")
+        return (
+            jsonify({"error": {"code": error.code, "message": error.message}}),
+            error.http_status,
+        )
+
+    log_event(logger, logging.INFO, "app.started", port=settings.app_port)
     return app
 
 

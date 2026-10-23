@@ -6,6 +6,7 @@ from src.modules.auth.application.ports.credential_checker import CredentialChec
 from src.modules.auth.application.ports.refresh_token_store import RefreshTokenStore
 from src.modules.auth.application.ports.token_issuer import TokenIssuerPort
 from src.shared.common.errors import UnauthorizedError
+from src.shared.events import EventBus, UserLoggedIn
 
 
 @dataclass(frozen=True)
@@ -34,10 +35,12 @@ class LoginUseCase:
         checker: CredentialChecker,
         token_issuer: TokenIssuerPort,
         store: RefreshTokenStore,
+        event_bus: EventBus,
     ) -> None:
         self._checker = checker
         self._token_issuer = token_issuer
         self._store = store
+        self._event_bus = event_bus
 
     def execute(self, username: str, password: str) -> LoginResult:
         # Kiểm tra nghiệp vụ phòng hờ (route đã kiểm tra thô rồi)
@@ -45,15 +48,13 @@ class LoginUseCase:
             raise UnauthorizedError(self._FAIL_MESSAGE)
 
         # Kiểm tra thông tin xác thực — sai ở bước nào cũng cùng một thông điệp
-        if not self._checker.check(username.strip(), password):
-            raise UnauthorizedError(self._FAIL_MESSAGE)
-
-        user = self._checker.find_user(username.strip())
+        user = self._checker.check(username.strip(), password)
         if user is None:
             raise UnauthorizedError(self._FAIL_MESSAGE)
 
         token = self._token_issuer.issue(user.id)
         refresh = self._store.create(user.id)
+        self._event_bus.publish(UserLoggedIn(user_id=user.id, role=user.role))
         return LoginResult(
             token=token,
             refresh_token=refresh.token,
