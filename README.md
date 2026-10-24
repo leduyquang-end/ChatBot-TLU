@@ -37,7 +37,7 @@ Mục tiêu: giúp sinh viên tra cứu nhanh các quy định, học phí, ngà
 - Nạp tài liệu của trường từ trang web, file DOCX, PDF và bảng XLSX.
 - Hai kho tri thức: một kho tìm theo nội dung và một kho thực thể với quan hệ giữa chúng.
 - Trả lời câu hỏi tiếng Việt, có nhớ ngữ cảnh trong cùng cuộc trò chuyện.
-- Giao diện chat trên web (Flask).
+- Ứng dụng web hỏi đáp độc lập cho sinh viên; giao diện tĩnh được Nginx phục vụ riêng và gọi Flask API qua `/api`.
 - Ghi nhật ký các sự kiện chính.
 
 **Ngoài phạm vi hiện tại:**
@@ -235,7 +235,10 @@ ChatBot/
 └── frontend/               Giao diện chat
     ├── Dockerfile          nginx
     ├── nginx.conf          tệp tĩnh + proxy /api/* → backend
-    └── public/index.html   trang chat
+    └── public/
+        ├── index.html      cấu trúc màn hình
+        ├── css/style.css   giao diện và responsive
+        └── js/             app.js, api.js, store.js, ui.js, config.js
 ```
 
 ### 5.1. Quy ước trong `src/modules/`
@@ -256,6 +259,34 @@ Quy tắc giao tiếp:
 - Client dịch vụ dùng chung đặt trong `src/platform/`. Client chỉ một module dùng thì đặt trong `infrastructure` của module đó.
 
 Vị trí pipeline nạp tri thức chưa chốt: trong `modules/chat/application/knowledge/` hoặc module `knowledge` riêng (P-03 trong kế hoạch).
+
+### 5.2. Quy ước frontend
+
+- `public/index.html`: cấu trúc HTML và các `id` mà controller sử dụng. Khi đổi `id`, cập nhật đồng thời `public/js/app.js`.
+- `public/css/style.css`: màu sắc, bố cục, responsive và trạng thái focus; không đặt xử lý API tại đây.
+- `public/js/app.js`: điều phối sự kiện và luồng màn hình; không gọi `fetch()` trực tiếp.
+- `public/js/api.js`: toàn bộ giao tiếp HTTP, header xác thực, timeout và lỗi mạng.
+- `public/js/store.js`: lưu trạng thái trình duyệt và chuẩn hóa response trước khi giao cho giao diện.
+- `public/js/ui.js`: tạo thành phần DOM; nội dung từ người dùng/backend phải được hiển thị an toàn.
+- `public/js/config.js`: một nơi khai báo endpoint, tên trường request/response, nhãn chế độ tìm, giới hạn và khóa lưu trữ.
+- Giao diện hiện là ứng dụng web hỏi đáp độc lập theo bố cục hội thoại toàn trang: lịch sử bên trái trên desktop, ngăn kéo lịch sử trên thiết bị nhỏ và vùng chat chính ở trung tâm.
+- Phạm vi hiện tại chỉ gồm phát triển và chạy website riêng; chưa triển khai nhúng vào website khác.
+- Không đổi hợp đồng API khi tùy chỉnh giao diện. HTML và các module API tách biệt để có thể thay đổi thiết kế mà không sửa backend nếu request/response không đổi.
+
+Hợp đồng backend hiện dùng:
+
+| Luồng | Request | Response |
+|-------|---------|----------|
+| Đăng nhập | `POST /api/auth/login`: `username`, `password` | `token`, `user_id`, `role` |
+| Xác minh phiên | `GET /api/user/me`: `Authorization: Bearer <token>` | `id`, `username`, `full_name`, `role` |
+| Hỏi đáp | `POST /api/chat/ask`: `question`, `conversation_id` | `answer`, `mode`, `conversation_id`, `sources` |
+| Lịch sử | `GET /api/chat/history?conversation_id=...` | `conversation_id`, `turns` gồm `role`, `content` |
+
+Khi tải lại trang, frontend gọi `/api/user/me` để xác minh token và vai trò từ backend; chỉ tài khoản có vai trò `student` mới được vào giao diện hỏi đáp. Nếu backend đổi đường dẫn hoặc tên trường, trước tiên cập nhật `config.js` và hàm chuẩn hóa trong `store.js`; chỉ sửa controller hoặc HTML nếu cấu trúc dữ liệu mới làm thay đổi hành vi/màn hình. Giữ nguyên request/response backend khi chỉ thay đổi giao diện. Phục vụ `frontend/public/` qua HTTP thay vì mở HTML bằng `file://`, vì trang dùng JavaScript modules. `MOCK.ENABLED` chỉ dùng để thử giao diện độc lập; phản hồi mock phân loại một số chủ đề để kiểm tra luồng nhưng không phải dữ liệu chính thức và không có nguồn trích dẫn. Tắt mock khi kiểm tra API thật.
+
+Kiểm tra vai trò trong frontend chỉ điều khiển giao diện, không thay thế phân quyền phía máy chủ. Hiện `/api/chat/ask` và `/api/chat/history` kiểm tra token nhưng chưa kiểm tra vai trò `student`; backend cần bổ sung kiểm tra này trước khi coi AC-05 của QT-01 được bảo đảm.
+
+Lịch sử hội thoại phía backend hiện lưu trong RAM. Backend chạy một Gunicorn worker để các request trong cùng thời gian hoạt động nhìn thấy cùng lịch sử; lịch sử vẫn mất khi backend khởi động lại. Frontend chỉ lưu danh sách tên và mã cuộc trò chuyện trên trình duyệt, không lưu nội dung lịch sử.
 
 ---
 

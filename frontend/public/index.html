@@ -3,159 +3,225 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatbot TLU</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; font-family: system-ui, sans-serif;
-      background: #f4f6f8; color: #1a1a1a;
-    }
-    .wrap { max-width: 760px; margin: 0 auto; padding: 16px; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    h1 { font-size: 1.2rem; margin: 0; }
-    #login, #chat { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    label { display: block; font-size: .9rem; margin: 8px 0 4px; }
-    input, button { font: inherit; }
-    input[type=text], input[type=password] {
-      width: 100%; padding: 10px; border: 1px solid #ccd; border-radius: 8px;
-    }
-    button {
-      margin-top: 12px; padding: 10px 16px; border: 0; border-radius: 8px;
-      background: #0b5ed7; color: #fff; cursor: pointer;
-    }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    #messages { min-height: 280px; max-height: 480px; overflow-y: auto; border: 1px solid #dde; border-radius: 8px; padding: 12px; margin-bottom: 12px; }
-    .msg { margin-bottom: 10px; padding: 8px 10px; border-radius: 8px; max-width: 90%; white-space: pre-wrap; }
-    .user { background: #d8e8ff; margin-left: auto; }
-    .bot { background: #eef1f4; }
-    .error { background: #fdecea; color: #b3261e; }
-    #composer { display: flex; gap: 8px; }
-    #composer input { flex: 1; }
-    .hidden { display: none; }
-    .meta { font-size: .75rem; color: #667; margin-top: 4px; }
-  </style>
+  <meta name="description" content="Chatbot hỏi đáp thông minh cho sinh viên Trường Đại học Thủy Lợi. Tra cứu nhanh học phí, học bổng, ngành học và các thủ tục hành chính." />
+  <title>TLU Assistant — Chatbot Trường Đại học Thủy Lợi</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <h1>Chatbot TLU</h1>
-      <button id="logoutBtn" class="hidden" type="button">Đăng xuất</button>
+<div id="chatbotRoot" class="chatbot-root">
+
+<!-- ═══════════════════════════════════════════
+     AUTH OVERLAY — hiển thị khi chưa đăng nhập
+═══════════════════════════════════════════ -->
+<div id="authOverlay" class="auth-overlay" hidden>
+  <div class="auth-card" role="main">
+
+    <div class="auth-logo-wrap">
+      <div class="auth-logo-circle brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="m2.5 8.5 9.5-5 9.5 5-9.5 5-9.5-5Z" />
+          <path d="M5.5 10v5c3.8 3 9.2 3 13 0v-5M21.5 8.5v6" />
+          <path d="M21.5 14.5v2.2" />
+        </svg>
+        <span>TLU</span>
+      </div>
+      <div>
+        <div class="auth-app-name">Thủy Lợi Assistant</div>
+        <div class="auth-app-sub">TRỢ LÝ HỌC VỤ · TLU</div>
+      </div>
+    </div>
+
+    <h1 class="auth-title">Chào bạn, bắt đầu nhé</h1>
+    <p class="auth-subtitle">Đăng nhập bằng tài khoản sinh viên để bắt đầu hỏi đáp.</p>
+
+    <form id="loginForm" novalidate>
+      <div class="input-group">
+        <label for="username">Tài khoản sinh viên</label>
+        <input
+          id="username"
+          type="text"
+          placeholder="Nhập mã sinh viên…"
+          autocomplete="username"
+          autocorrect="off"
+          autocapitalize="none"
+          spellcheck="false"
+        />
+      </div>
+      <div class="input-group">
+        <label for="password">Mật khẩu</label>
+        <input
+          id="password"
+          type="password"
+          placeholder="Nhập mật khẩu…"
+          autocomplete="current-password"
+        />
+      </div>
+      <button id="loginBtn" type="submit" class="btn btn--primary btn--block">
+        <span class="btn-spinner" hidden></span>
+        <span>Đăng nhập</span>
+      </button>
+    </form>
+
+    <p id="loginError" class="error-msg" hidden></p>
+
+    <p class="demo-hint">
+      Demo: <code>sinhvien01</code> / <code>demo-password</code>
+    </p>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     APP SHELL — hiển thị sau khi đăng nhập
+═══════════════════════════════════════════ -->
+<div id="appShell" class="app-shell" hidden>
+
+  <!-- ── Sidebar ── -->
+  <aside id="sidebar" class="sidebar" aria-label="Lịch sử trò chuyện">
+
+    <div class="sidebar-header">
+      <div class="sidebar-logo brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="m2.5 8.5 9.5-5 9.5 5-9.5 5-9.5-5Z" />
+          <path d="M5.5 10v5c3.8 3 9.2 3 13 0v-5M21.5 8.5v6" />
+          <path d="M21.5 14.5v2.2" />
+        </svg>
+        <span>TLU</span>
+      </div>
+      <div>
+        <div class="sidebar-app-name">Thủy Lợi Assistant</div>
+        <div class="sidebar-app-sub">Trợ lý học vụ · TLU</div>
+      </div>
+    </div>
+
+    <div class="sidebar-body">
+      <!-- Nút tạo cuộc trò chuyện mới -->
+      <button id="newChatBtn" class="btn btn--primary new-chat-btn" type="button">
+        ✏️ Cuộc trò chuyện mới
+      </button>
+
+      <div class="sidebar-section-label">Lịch sử</div>
+      <ul id="sessionList" aria-label="Danh sách cuộc trò chuyện"></ul>
+    </div>
+
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="logout-btn" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+        </svg>
+        Đăng xuất
+      </button>
+    </div>
+  </aside>
+
+  <!-- Overlay khi sidebar mở trên mobile -->
+  <div id="sidebarOverlay" class="sidebar-overlay" hidden aria-hidden="true"></div>
+
+  <!-- ── Main area ── -->
+  <div class="main-area">
+
+    <!-- Header -->
+    <header class="chat-header">
+      <button
+        id="sidebarToggle"
+        class="btn btn--icon chat-header-toggle"
+        type="button"
+        aria-label="Mở lịch sử trò chuyện"
+        aria-controls="sidebar"
+        title="Lịch sử trò chuyện"
+      >
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="8.5" />
+          <path d="M12 7v5l3.2 2" />
+        </svg>
+      </button>
+
+      <div class="chat-header-info">
+        <div class="chat-header-avatar assistant-avatar assistant-avatar--header" aria-label="TLU Assistant">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="m2.5 8.5 9.5-5 9.5 5-9.5 5-9.5-5Z" />
+          <path d="M5.5 10v5c3.8 3 9.2 3 13 0v-5M21.5 8.5v6" />
+          <path d="M21.5 14.5v2.2" />
+          </svg>
+          <span>TLU</span>
+        </div>
+        <div>
+          <div class="chat-header-name">Thủy Lợi Assistant</div>
+          <div class="chat-header-kicker">TRỢ LÝ HỌC VỤ · TLU</div>
+          <div class="chat-header-status" id="backendStatus" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="backendStatusLabel">Đang kiểm tra dịch vụ...</span>
+          </div>
+        </div>
+
+      </div>
     </header>
 
-    <section id="login">
-      <h2>Đăng nhập</h2>
-      <label for="username">Tài khoản</label>
-      <input id="username" type="text" autocomplete="username" />
-      <label for="password">Mật khẩu</label>
-      <input id="password" type="password" autocomplete="current-password" />
-      <button id="loginBtn" type="button">Đăng nhập</button>
-      <p class="meta">Demo: sinhvien01 / demo-password</p>
-      <p id="loginError" class="error hidden"></p>
-    </section>
+    <!-- Feed -->
+    <div class="feed-wrapper" role="log" aria-label="Cuộc trò chuyện" aria-live="polite">
+      <div class="feed-inner">
+        <!-- Feed area (JS append messages here) -->
+        <div id="feedArea"></div>
 
-    <section id="chat" class="hidden">
-      <div id="messages"></div>
-      <form id="composer">
-        <input id="question" type="text" placeholder="Nhập câu hỏi về quy định, học phí, ngành học..." maxlength="2000" />
-        <button id="sendBtn" type="submit">Gửi</button>
+        <!-- Empty state -->
+        <div id="emptyState" class="empty-state">
+          <div class="empty-state-icon brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="m2.5 8.5 9.5-5 9.5 5-9.5 5-9.5-5Z" />
+              <path d="M5.5 10v5c3.8 3 9.2 3 13 0v-5M21.5 8.5v6" />
+              <path d="M21.5 14.5v2.2" />
+            </svg>
+            <span>TLU</span>
+          </div>
+          <h2>Xin chào, mình có thể giúp gì?</h2>
+          <p>Tra cứu học phí, học bổng, quy định học tập và thủ tục tại Trường Đại học Thủy Lợi.</p>
+        </div>
+
+        <!-- Suggest chips (JS render nội dung) -->
+        <div id="chipArea" class="chips-area" role="group" aria-label="Câu hỏi gợi ý"></div>
+      </div>
+    </div>
+
+    <!-- Composer -->
+    <div class="composer-wrapper">
+      <form id="composer" class="composer-inner" novalidate>
+        <div class="composer-input-wrap">
+          <textarea
+            id="questionInput"
+            placeholder="Nhập tin nhắn của bạn..."
+            maxlength="2000"
+            rows="1"
+            aria-label="Nhập câu hỏi"
+            autocomplete="off"
+          ></textarea>
+          <span id="charCount" class="char-count" aria-live="polite">0/2000</span>
+        </div>
+        <button id="sendBtn" class="send-btn" type="submit" aria-label="Gửi câu hỏi">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
       </form>
-      <p id="chatError" class="error hidden"></p>
-    </section>
-  </div>
+      <p class="composer-hint">
+        Thông tin tham khảo từ tài liệu của Trường Đại học Thủy Lợi.
+      </p>
+    </div>
 
-  <script>
-    const state = {
-      token: localStorage.getItem("token") || "",
-      conversationId: localStorage.getItem("cid") || crypto.randomUUID(),
-    };
-    localStorage.setItem("cid", state.conversationId);
+  </div><!-- /main-area -->
+  </div><!-- /app-shell -->
 
-    const $ = (id) => document.getElementById(id);
-    const API = "/api";
+  <!-- Toast container -->
+  <div id="toastArea" class="toast-area" aria-live="assertive" aria-atomic="true"></div>
+  </div><!-- /chatbotRoot -->
 
-    function showChat(show) {
-      $("login").classList.toggle("hidden", show);
-      $("chat").classList.toggle("hidden", !show);
-      $("logoutBtn").classList.toggle("hidden", !show);
-    }
+<!--
+  JS modules — type="module" để dùng import/export
+  Thứ tự: app.js là entry point, nó import các module khác.
+  Trình duyệt tự xử lý dependency graph.
+-->
+<script type="module" src="js/app.js"></script>
 
-    function addMessage(text, role, meta) {
-      const div = document.createElement("div");
-      div.className = "msg " + role;
-      div.textContent = text;
-      if (meta) {
-        const m = document.createElement("div");
-        m.className = "meta";
-        m.textContent = meta;
-        div.appendChild(m);
-      }
-      $("messages").appendChild(div);
-      $("messages").scrollTop = $("messages").scrollHeight;
-    }
-
-    async function login() {
-      $("loginError").classList.add("hidden");
-      try {
-        const res = await fetch(API + "/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: $("username").value.trim(), password: $("password").value }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.error?.message || "Đăng nhập thất bại");
-        state.token = data.token;
-        localStorage.setItem("token", state.token);
-        showChat(true);
-      } catch (e) {
-        $("loginError").textContent = e.message;
-        $("loginError").classList.remove("hidden");
-      }
-    }
-
-    async function ask(question) {
-      $("chatError").classList.add("hidden");
-      addMessage(question, "user");
-      $("sendBtn").disabled = true;
-      try {
-        const res = await fetch(API + "/chat/ask", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: "Bearer " + state.token },
-          body: JSON.stringify({ question, conversation_id: state.conversationId }),
-        });
-        const data = await res.json();
-        if (res.status === 401) {
-          state.token = "";
-          localStorage.removeItem("token");
-          showChat(false);
-          throw new Error("Phiên đăng nhập đã hết hạn");
-        }
-        if (!res.ok) throw new Error(data?.error?.message || "Không gửi được câu hỏi");
-        addMessage(data.answer, "bot", "Cách tìm: " + data.mode);
-      } catch (e) {
-        $("chatError").textContent = e.message;
-        $("chatError").classList.remove("hidden");
-      } finally {
-        $("sendBtn").disabled = false;
-        $("question").focus();
-      }
-    }
-
-    $("loginBtn").addEventListener("click", login);
-    $("password").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
-    $("composer").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const q = $("question").value.trim();
-      if (!q) return;
-      $("question").value = "";
-      ask(q);
-    });
-    $("logoutBtn").addEventListener("click", () => {
-      state.token = "";
-      localStorage.removeItem("token");
-      showChat(false);
-    });
-
-    if (state.token) showChat(true);
-  </script>
 </body>
 </html>
